@@ -1,0 +1,144 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = isNew ? 'New Service'|t('stub') : service.name %}
+{% set selectedSubnavItem = 'services' %}
+
+{% block content %}
+    <form method="post" accept-charset="UTF-8">
+        {{ csrfInput() }}
+        {{ actionInput('stub/services/save') }}
+        {{ redirectInput('stub/services') }}
+
+        {% if service.id %}
+            {{ hiddenInput('serviceId', service.id) }}
+        {% endif %}
+
+        {% import '_includes/forms' as forms %}
+
+        {{ forms.textField({
+            label: 'Name'|t('stub'),
+            id: 'name',
+            name: 'name',
+            value: service.name,
+            required: true,
+            errors: service.getErrors('name'),
+            first: true,
+        }) }}
+
+        {{ forms.textField({
+            label: 'Handle'|t('stub'),
+            id: 'handle',
+            name: 'handle',
+            value: service.handle,
+            instructions: 'Leave blank to auto-generate from name.'|t('stub'),
+            errors: service.getErrors('handle'),
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'Description'|t('stub'),
+            id: 'description',
+            name: 'description',
+            value: service.description,
+            rows: 3,
+        }) }}
+
+        <hr>
+
+        {{ forms.textField({
+            label: 'Duration (minutes)'|t('stub'),
+            id: 'duration',
+            name: 'duration',
+            value: service.duration,
+            type: 'number',
+            min: 1,
+            required: true,
+            errors: service.getErrors('duration'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Price'|t('stub'),
+            id: 'price',
+            name: 'price',
+            value: service.price,
+            type: 'number',
+            step: '0.01',
+            min: 0,
+            instructions: 'Set to 0 for free services.'|t('stub'),
+            errors: service.getErrors('price'),
+        }) }}
+
+        {{ forms.selectField({
+            label: 'Currency'|t('stub'),
+            id: 'currency',
+            name: 'currency',
+            value: service.currency,
+            options: [
+                { label: 'USD', value: 'USD' },
+                { label: 'EUR', value: 'EUR' },
+                { label: 'GBP', value: 'GBP' },
+                { label: 'CAD', value: 'CAD' },
+                { label: 'AUD', value: 'AUD' },
+            ],
+        }) }}
+
+        <hr>
+
+        {{ forms.textField({
+            label: 'Buffer Time Before (minutes)'|t('stub'),
+            id: 'bufferTimeBefore',
+            name: 'bufferTimeBefore',
+            value: service.bufferTimeBefore,
+            type: 'number',
+            min: 0,
+            instructions: 'Blocked time before each booking.'|t('stub'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Buffer Time After (minutes)'|t('stub'),
+            id: 'bufferTimeAfter',
+            name: 'bufferTimeAfter',
+            value: service.bufferTimeAfter,
+            type: 'number',
+            min: 0,
+            instructions: 'Blocked time after each booking.'|t('stub'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Capacity'|t('stub'),
+            id: 'capacity',
+            name: 'capacity',
+            value: service.capacity,
+            type: 'number',
+            min: 1,
+            instructions: 'Number of concurrent bookings per time slot.'|t('stub'),
+        }) }}
+
+        {{ forms.colorField({
+            label: 'Color'|t('stub'),
+            id: 'color',
+            name: 'color',
+            value: service.color,
+        }) }}
+
+        {{ forms.lightswitchField({
+            label: 'Enabled'|t('stub'),
+            id: 'enabled',
+            name: 'enabled',
+            on: service.enabled,
+        }) }}
+
+        <div class="btngroup">
+            <button type="submit" class="btn submit">{{ 'Save'|t('app') }}</button>
+        </div>
+    </form>
+
+    {% if not isNew %}
+        {% js %}
+            new Craft.HandleGenerator('#name', '#handle');
+        {% endjs %}
+    {% else %}
+        {% js %}
+            new Craft.HandleGenerator('#name', '#handle');
+        {% endjs %}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Dashboard'|t('headcount') %}
+{% set selectedSubnavItem = 'dashboard' %}
+
+{% block content %}
+    <div class="headcount-dashboard">
+        <div class="headcount-card">
+            <div class="headcount-card__label">{{ 'Active Members'|t('headcount') }}</div>
+            <div class="headcount-card__value">{{ stats.activeMembers }}</div>
+        </div>
+        <div class="headcount-card">
+            <div class="headcount-card__label">{{ 'Monthly Recurring Revenue'|t('headcount') }}</div>
+            <div class="headcount-card__value">${{ stats.mrr|number_format(2) }}</div>
+        </div>
+        <div class="headcount-card">
+            <div class="headcount-card__label">{{ 'Churn Rate'|t('headcount') }}</div>
+            <div class="headcount-card__value">{{ stats.churnRate }}%</div>
+        </div>
+        <div class="headcount-card">
+            <div class="headcount-card__label">{{ 'Trial Conversion'|t('headcount') }}</div>
+            <div class="headcount-card__value">{{ stats.trialConversionRate }}%</div>
+        </div>
+    </div>
+
+    {% if stats.membersByPlan|length %}
+        <div class="headcount-chart">
+            <div class="headcount-chart__title">{{ 'Members by Plan'|t('headcount') }}</div>
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Plan'|t('headcount') }}</th>
+                        <th>{{ 'Active Members'|t('headcount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for handle, data in stats.membersByPlan %}
+                        <tr>
+                            <td>{{ data.plan.name }}</td>
+                            <td>{{ data.count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if subscriptionsOverTime is defined %}
+        <div class="headcount-chart">
+            <div class="headcount-chart__title">{{ 'New Subscriptions'|t('headcount') }} ({{ 'Last'|t('headcount') }} {{ days }} {{ 'days'|t('headcount') }})</div>
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Date'|t('headcount') }}</th>
+                        <th>{{ 'New Subscriptions'|t('headcount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in subscriptionsOverTime %}
+                        {% if row.count > 0 %}
+                            <tr>
+                                <td>{{ row.date }}</td>
+                                <td>{{ row.count }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="headcount-chart">
+            <div class="headcount-chart__title">{{ 'Revenue'|t('headcount') }} ({{ 'Last'|t('headcount') }} {{ days }} {{ 'days'|t('headcount') }})</div>
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Date'|t('headcount') }}</th>
+                        <th>{{ 'Revenue'|t('headcount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in revenueOverTime %}
+                        {% if row.revenue > 0 %}
+                            <tr>
+                                <td>{{ row.date }}</td>
+                                <td>${{ row.revenue|number_format(2) }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if couponUsage is defined and couponUsage|length %}
+        <div class="headcount-chart">
+            <div class="headcount-chart__title">{{ 'Coupon Usage'|t('headcount') }}</div>
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Code'|t('headcount') }}</th>
+                        <th>{{ 'Description'|t('headcount') }}</th>
+                        <th>{{ 'Discount'|t('headcount') }}</th>
+                        <th>{{ 'Uses'|t('headcount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coupon in couponUsage %}
+                        <tr>
+                            <td><code>{{ coupon.code }}</code></td>
+                            <td>{{ coupon.description ?? '—' }}</td>
+                            <td>
+                                {% if coupon.discountType == 'percent' %}
+                                    {{ coupon.discountAmount }}%
+                                {% else %}
+                                    ${{ coupon.discountAmount|number_format(2) }}
+                                {% endif %}
+                            </td>
+                            <td>{{ coupon.currentUses }}{% if coupon.maxUses %} / {{ coupon.maxUses }}{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

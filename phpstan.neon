@@ -1,0 +1,23 @@
+includes:
+    - vendor/craftcms/phpstan/phpstan.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+    # src/modules/* is a one-way vendored copy of each sub-plugin's own repo, analysed
+    # there. It stays autoloadable (composer.json maps the namespaces to it) so the host's
+    # references to the mounted plugin classes still resolve — it just isn't scanned.
+    excludePaths:
+        - src/modules/*
+
+    ignoreErrors:
+        # `mountedUnderShowtime` is a duck-typed contract, not an interface: the three
+        # bundled plugins must each stay independently installable from the Plugin Store,
+        # so they cannot share a base class or interface without a shared Composer package
+        # — which the distribution constraint rules out (PLAN.md §1). The host sets the
+        # property via construction config; PHPStan only sees craft\base\Plugin.
+        -
+            identifier: property.notFound
+            message: '#Access to an undefined property craft\\base\\Plugin::\$mountedUnderShowtime#'
+            path: src/console/controllers/TestController.php

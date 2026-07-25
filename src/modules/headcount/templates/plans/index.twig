@@ -1,0 +1,47 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Plans'|t('headcount') %}
+{% set selectedSubnavItem = 'plans' %}
+
+{% block actionButton %}
+    <a href="{{ cpUrl('headcount/plans/new') }}" class="btn submit">{{ 'New Plan'|t('headcount') }}</a>
+{% endblock %}
+
+{% block content %}
+    {% if plans|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|t('headcount') }}</th>
+                    <th>{{ 'Handle'|t('headcount') }}</th>
+                    <th>{{ 'Price'|t('headcount') }}</th>
+                    <th>{{ 'Interval'|t('headcount') }}</th>
+                    <th>{{ 'Trial'|t('headcount') }}</th>
+                    <th>{{ 'Stripe'|t('headcount') }}</th>
+                    <th>{{ 'Status'|t('headcount') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan in plans %}
+                    <tr>
+                        <td><a href="{{ cpUrl('headcount/plans/' ~ plan.id) }}"><strong>{{ plan.name }}</strong></a></td>
+                        <td><code>{{ plan.handle }}</code></td>
+                        <td>{{ plan.currency|upper }} {{ plan.price|number_format(2) }}</td>
+                        <td>{{ plan.getIntervalLabel() }}</td>
+                        <td>{{ plan.trialDays ? plan.trialDays ~ ' days' : '—' }}</td>
+                        <td>{{ plan.stripePriceId ? '✓' : '—' }}</td>
+                        <td>
+                            {% if plan.enabled %}
+                                <span class="status green"></span> {{ 'Enabled'|t('headcount') }}
+                            {% else %}
+                                <span class="status"></span> {{ 'Disabled'|t('headcount') }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ 'No plans yet. Create your first membership plan.'|t('headcount') }}</p>
+    {% endif %}
+{% endblock %}

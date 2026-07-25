@@ -1,0 +1,167 @@
+{% import '_includes/forms' as forms %}
+
+<h2>{{ 'General'|t('headcount') }}</h2>
+
+{{ forms.textField({
+    label: 'Default Currency'|t('headcount'),
+    instructions: 'Three-letter currency code (e.g., USD, EUR, GBP).'|t('headcount'),
+    name: 'defaultCurrency',
+    value: settings.defaultCurrency,
+    size: 3,
+    maxlength: 3,
+}) }}
+
+{{ forms.textField({
+    label: 'Checkout Success URL'|t('headcount'),
+    instructions: 'Relative URL to redirect after successful checkout.'|t('headcount'),
+    name: 'checkoutSuccessUrl',
+    value: settings.checkoutSuccessUrl,
+}) }}
+
+{{ forms.textField({
+    label: 'Checkout Cancel URL'|t('headcount'),
+    instructions: 'Relative URL to redirect when checkout is canceled.'|t('headcount'),
+    name: 'checkoutCancelUrl',
+    value: settings.checkoutCancelUrl,
+}) }}
+
+{{ forms.textField({
+    label: 'Login URL'|t('headcount'),
+    instructions: 'Relative URL of your login page.'|t('headcount'),
+    name: 'loginUrl',
+    value: settings.loginUrl,
+}) }}
+
+{{ forms.textField({
+    label: 'Pricing Page URL'|t('headcount'),
+    instructions: 'Relative URL of your pricing/plans page.'|t('headcount'),
+    name: 'pricingUrl',
+    value: settings.pricingUrl,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Enforce Access Rules'|t('headcount'),
+    instructions: 'Apply access rules to front-end requests automatically. Turn this off if your templates already gate content themselves via `craft.headcount.canAccess()` — rules still evaluate, but nothing gets blocked for you.'|t('headcount'),
+    name: 'enforceAccessRules',
+    on: settings.enforceAccessRules,
+}) }}
+
+<hr>
+
+<h2>{{ 'Stripe'|t('headcount') }}</h2>
+
+{{ forms.lightswitchField({
+    label: 'Enable Stripe'|t('headcount'),
+    name: 'stripeEnabled',
+    on: settings.stripeEnabled,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Secret Key'|t('headcount'),
+    instructions: 'Your Stripe secret key. Supports environment variables.'|t('headcount'),
+    name: 'stripeSecretKey',
+    suggestEnvVars: true,
+    value: settings.stripeSecretKey,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Publishable Key'|t('headcount'),
+    instructions: 'Your Stripe publishable key. Supports environment variables.'|t('headcount'),
+    name: 'stripePublishableKey',
+    suggestEnvVars: true,
+    value: settings.stripePublishableKey,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Webhook Secret'|t('headcount'),
+    instructions: 'Webhook signing secret (starts with whsec_). Supports environment variables.'|t('headcount'),
+    name: 'stripeWebhookSecret',
+    suggestEnvVars: true,
+    value: settings.stripeWebhookSecret,
+}) }}
+
+<hr>
+
+<h2>{{ 'PayPal'|t('headcount') }}</h2>
+
+{{ forms.lightswitchField({
+    label: 'Enable PayPal'|t('headcount'),
+    name: 'paypalEnabled',
+    on: settings.paypalEnabled,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Sandbox Mode'|t('headcount'),
+    name: 'paypalSandbox',
+    on: settings.paypalSandbox,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'PayPal Client ID'|t('headcount'),
+    name: 'paypalClientId',
+    suggestEnvVars: true,
+    value: settings.paypalClientId,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'PayPal Client Secret'|t('headcount'),
+    name: 'paypalClientSecret',
+    suggestEnvVars: true,
+    value: settings.paypalClientSecret,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'PayPal Webhook ID'|t('headcount'),
+    name: 'paypalWebhookId',
+    suggestEnvVars: true,
+    value: settings.paypalWebhookId,
+}) }}
+
+<hr>
+
+<h2>{{ 'Emails'|t('headcount') }}</h2>
+
+{{ forms.lightswitchField({ label: 'Send Welcome Email'|t('headcount'), name: 'sendWelcomeEmail', on: settings.sendWelcomeEmail }) }}
+{{ forms.lightswitchField({ label: 'Send Payment Receipt Email'|t('headcount'), name: 'sendPaymentReceiptEmail', on: settings.sendPaymentReceiptEmail }) }}
+{{ forms.lightswitchField({ label: 'Send Payment Failed Email'|t('headcount'), name: 'sendPaymentFailedEmail', on: settings.sendPaymentFailedEmail }) }}
+{{ forms.lightswitchField({ label: 'Send Expiration Reminder Email'|t('headcount'), name: 'sendExpirationReminderEmail', on: settings.sendExpirationReminderEmail }) }}
+{{ forms.lightswitchField({ label: 'Send Trial Ending Email'|t('headcount'), name: 'sendTrialEndingEmail', on: settings.sendTrialEndingEmail }) }}
+{{ forms.lightswitchField({ label: 'Send Cancellation Email'|t('headcount'), name: 'sendCancellationEmail', on: settings.sendCancellationEmail }) }}
+{{ forms.lightswitchField({ label: 'Send Drip Unlocked Email'|t('headcount'), name: 'sendDripUnlockedEmail', on: settings.sendDripUnlockedEmail }) }}
+
+{{ forms.textField({
+    label: 'Expiration Reminder Days'|t('headcount'),
+    instructions: 'Days before expiration to send reminder.'|t('headcount'),
+    name: 'expirationReminderDays',
+    value: settings.expirationReminderDays,
+    type: 'number',
+    min: 1,
+    size: 5,
+}) }}
+
+<hr>
+
+<h2>{{ 'API & Webhooks'|t('headcount') }}</h2>
+
+{{ forms.autosuggestField({
+    label: 'API Key'|t('headcount'),
+    instructions: 'API key for server-to-server authentication.'|t('headcount'),
+    name: 'apiKey',
+    suggestEnvVars: true,
+    value: settings.apiKey,
+}) }}
+
+{{ forms.textField({
+    label: 'Outgoing Webhook URL'|t('headcount'),
+    instructions: 'URL to send outgoing webhook events to.'|t('headcount'),
+    name: 'outgoingWebhookUrl',
+    value: settings.outgoingWebhookUrl,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Outgoing Webhook Secret'|t('headcount'),
+    instructions: 'Secret for HMAC signing outgoing webhooks.'|t('headcount'),
+    name: 'outgoingWebhookSecret',
+    suggestEnvVars: true,
+    value: settings.outgoingWebhookSecret,
+}) }}

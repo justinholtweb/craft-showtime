@@ -1,0 +1,41 @@
+{#
+ # Owl demo: FullCalendar month view.
+ # Pulls occurrences from the JSON endpoint, which returns only those in the requested range.
+ #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'Calendar'|t('owl') }}</title>
+    {# Demo only: for production, self-host FullCalendar or pin a Subresource Integrity hash. #}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #1f2933; }
+        .owl-wrap { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.4rem; }
+        a { color: #7c5cff; }
+        #calendar { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    </style>
+</head>
+<body>
+    <div class="owl-wrap">
+        <h1>🦉 {{ 'Events Calendar'|t('owl') }}</h1>
+        <p><a href="{{ siteUrl('owl/upcoming') }}">{{ 'Upcoming list'|t('owl') }}</a></p>
+        <div id="calendar"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
+                events: '{{ siteUrl('owl/events.json') }}',
+                eventDisplay: 'block',
+            });
+            calendar.render();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'PayPal Settings'|t('headcount') %}
+{% set selectedSubnavItem = 'settings' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="headcount/settings/save">
+    {{ csrfInput() }}
+
+    {{ forms.lightswitchField({
+        label: 'Enable PayPal'|t('headcount'),
+        name: 'paypalEnabled',
+        on: settings.paypalEnabled,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Sandbox Mode'|t('headcount'),
+        instructions: 'Use PayPal sandbox for testing.'|t('headcount'),
+        name: 'paypalSandbox',
+        on: settings.paypalSandbox,
+    }) }}
+
+    {{ forms.autosuggestField({
+        label: 'Client ID'|t('headcount'),
+        name: 'paypalClientId',
+        suggestEnvVars: true,
+        value: settings.paypalClientId,
+    }) }}
+
+    {{ forms.autosuggestField({
+        label: 'Client Secret'|t('headcount'),
+        name: 'paypalClientSecret',
+        suggestEnvVars: true,
+        value: settings.paypalClientSecret,
+    }) }}
+
+    {{ forms.autosuggestField({
+        label: 'Webhook ID'|t('headcount'),
+        instructions: 'Required for webhook signature verification.'|t('headcount'),
+        name: 'paypalWebhookId',
+        suggestEnvVars: true,
+        value: settings.paypalWebhookId,
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Webhook Endpoint'|t('headcount') }}</h2>
+    <p>{{ 'Configure your PayPal webhook to point to:'|t('headcount') }}</p>
+    <p><code>{{ siteUrl('actions/headcount/webhook/paypal') }}</code></p>
+    <p>{{ 'Events to listen for:'|t('headcount') }}</p>
+    <ul>
+        <li><code>BILLING.SUBSCRIPTION.ACTIVATED</code></li>
+        <li><code>BILLING.SUBSCRIPTION.CANCELLED</code></li>
+        <li><code>BILLING.SUBSCRIPTION.SUSPENDED</code></li>
+        <li><code>BILLING.SUBSCRIPTION.EXPIRED</code></li>
+        <li><code>PAYMENT.SALE.COMPLETED</code></li>
+        <li><code>PAYMENT.SALE.DENIED</code></li>
+    </ul>
+{% endblock %}

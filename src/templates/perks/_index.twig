@@ -1,0 +1,44 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Member perks'|t('showtime') %}
+{% set selectedSubnavItem = 'perks' %}
+
+{% block actionButton %}
+    <a href="{{ cpUrl('showtime/perks/new') }}" class="btn submit add icon">{{ 'New perk'|t('showtime') }}</a>
+{% endblock %}
+
+{% block content %}
+    <p class="light">
+        {{ 'What holding a membership plan does to something the rest of the bundle sells.'|t('showtime') }}
+    </p>
+
+    {% if perks|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Plan'|t('showtime') }}</th>
+                    <th>{{ 'Applies to'|t('showtime') }}</th>
+                    <th>{{ 'Perk'|t('showtime') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for perk in perks %}
+                    <tr>
+                        <td>{{ plans[perk.planId] ?? ('Plan #' ~ perk.planId) }}</td>
+                        <td>{{ services[perk.targetId] ?? ('#' ~ perk.targetId) }} <span class="light">({{ perk.targetType == 'owl:ticket' ? 'ticket'|t('showtime') : 'service'|t('showtime') }})</span></td>
+                        <td>
+                            {% if perk.membersOnly %}<span class="status orange"></span>{{ 'Members only'|t('showtime') }}{% endif %}
+                            {% if perk.discountPercent %}{{ perk.discountPercent }}% {{ 'off'|t('showtime') }}{% endif %}
+                            {% if perk.discountAmount %}{{ perk.discountAmount|number_format(2) }} {{ 'off'|t('showtime') }}{% endif %}
+                            {% if not perk.enabled %}<span class="light">({{ 'disabled'|t('showtime') }})</span>{% endif %}
+                        </td>
+                        <td class="thin"><a href="{{ cpUrl('showtime/perks/' ~ perk.id) }}">{{ 'Edit'|t('showtime') }}</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ 'No perks yet. A perk links a membership plan to a bookable service — a discount, members-only access, or both.'|t('showtime') }}</p>
+    {% endif %}
+{% endblock %}

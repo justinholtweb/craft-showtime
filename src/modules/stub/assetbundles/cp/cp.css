@@ -1,0 +1,63 @@
+/* Stub CP Styles */
+.stub-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stub-stat-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.stub-stat-card .stub-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+}
+
+.stub-stat-card .stub-stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.stub-today-list {
+    margin-top: 16px;
+}
+
+.stub-today-list .stub-booking-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.stub-today-list .stub-booking-item:last-child {
+    border-bottom: none;
+}
+
+.stub-booking-time {
+    font-weight: 600;
+    font-size: 0.875rem;
+    min-width: 80px;
+}
+
+.stub-booking-info {
+    flex: 1;
+}
+
+.stub-booking-info .stub-booking-service {
+    font-weight: 500;
+}
+
+.stub-booking-info .stub-booking-customer {
+    font-size: 0.875rem;
+    color: #6b7280;
+}

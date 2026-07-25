@@ -1,0 +1,82 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = customer.firstName ~ ' ' ~ customer.lastName %}
+{% set selectedSubnavItem = 'customers' %}
+
+{% block content %}
+    <div class="toolbar">
+        <a href="{{ cpUrl('stub/customers') }}" class="btn">{{ '← Back to Customers'|t('stub') }}</a>
+    </div>
+
+    <div class="grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 16px;">
+        <div class="pane">
+            <h2>{{ 'Customer Details'|t('stub') }}</h2>
+            <table class="data fullwidth">
+                <tbody>
+                    <tr>
+                        <th>{{ 'Name'|t('stub') }}</th>
+                        <td>{{ customer.firstName }} {{ customer.lastName }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'Email'|t('stub') }}</th>
+                        <td><a href="mailto:{{ customer.email }}">{{ customer.email }}</a></td>
+                    </tr>
+                    {% if customer.phone %}
+                        <tr>
+                            <th>{{ 'Phone'|t('stub') }}</th>
+                            <td>{{ customer.phone }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if customer.userId %}
+                        <tr>
+                            <th>{{ 'Craft User'|t('stub') }}</th>
+                            <td><a href="{{ cpUrl('users/' ~ customer.userId) }}">{{ 'View User'|t('stub') }}</a></td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <th>{{ 'Customer Since'|t('stub') }}</th>
+                        <td>{{ customer.dateCreated|date('M j, Y') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {% if customer.notes %}
+                <h3 style="margin-top: 16px;">{{ 'Notes'|t('stub') }}</h3>
+                <p>{{ customer.notes }}</p>
+            {% endif %}
+        </div>
+
+        <div class="pane">
+            <h2>{{ 'Booking History'|t('stub') }} ({{ bookings|length }})</h2>
+
+            {% if bookings|length %}
+                <table class="data fullwidth">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Reference'|t('stub') }}</th>
+                            <th>{{ 'Service'|t('stub') }}</th>
+                            <th>{{ 'Date'|t('stub') }}</th>
+                            <th>{{ 'Status'|t('stub') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                            {% set service = booking.getService() %}
+                            <tr>
+                                <td><a href="{{ booking.cpEditUrl }}">{{ booking.referenceNumber }}</a></td>
+                                <td>{{ service ? service.name : '—' }}</td>
+                                <td>{{ booking.localStartDateTime|date('M j, Y g:i A', timezone=booking.timezone) }}</td>
+                                <td>
+                                    <span class="status {{ booking.bookingStatus == 'confirmed' ? 'green' : (booking.bookingStatus == 'pending' ? 'orange' : (booking.bookingStatus == 'cancelled' ? 'red' : 'blue')) }}"></span>
+                                    {{ booking.bookingStatus|capitalize }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="light">{{ 'No bookings yet.'|t('stub') }}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

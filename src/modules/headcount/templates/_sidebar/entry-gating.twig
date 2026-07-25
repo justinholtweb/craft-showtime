@@ -1,0 +1,30 @@
+{# Not craft.app.plugins.getPlugin('headcount') — that's null when Headcount is mounted
+   inside a host bundle instead of installed as its own plugin. #}
+{% set plugin = craft.headcount.plugin %}
+{% if plugin %}
+    {% set rules = plugin.gating.getRulesForEntry(entry) %}
+
+    <div class="headcount-sidebar-gating">
+        <div class="headcount-sidebar-gating__heading">
+            <span class="status {{ rules|length ? 'orange' : 'green' }}"></span>
+            {{ 'Headcount'|t('headcount') }}
+        </div>
+        <div class="headcount-sidebar-gating__rules">
+            {% if rules|length %}
+                <p style="margin: 0 0 6px;">{{ 'This entry is gated by:'|t('headcount') }}</p>
+                {% for rule in rules %}
+                    <div style="padding: 4px 0;">
+                        <a href="{{ cpUrl('headcount/access-rules/' ~ rule.id) }}">{{ rule.name }}</a>
+                        <span style="color: var(--gray-400);">({{ rule.behavior }})</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="margin: 0; color: var(--gray-400);">{{ 'No access rules apply to this entry.'|t('headcount') }}</p>
+            {% endif %}
+
+            <div style="margin-top: 8px;">
+                <a href="{{ cpUrl('headcount/access-rules/new') }}" class="go">{{ 'Create access rule'|t('headcount') }}</a>
+            </div>
+        </div>
+    </div>
+{% endif %}

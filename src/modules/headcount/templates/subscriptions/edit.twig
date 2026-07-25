@@ -1,0 +1,99 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Edit Subscription'|t('headcount') ~ ' #' ~ subscription.id %}
+{% set selectedSubnavItem = 'subscriptions' %}
+{% set fullPageForm = true %}
+
+{% set user = subscription.getUser() %}
+{% set plan = subscription.getPlan() %}
+
+{% block content %}
+    <input type="hidden" name="action" value="headcount/subscriptions/save">
+    <input type="hidden" name="subscriptionId" value="{{ subscription.id }}">
+    {{ csrfInput() }}
+
+    <div class="meta">
+        <div class="data">
+            <dt>{{ 'User'|t('headcount') }}</dt>
+            <dd>
+                {% if user %}
+                    <a href="{{ user.cpEditUrl }}">{{ user.friendlyName }}</a> ({{ user.email }})
+                {% else %}
+                    {{ 'Unknown'|t('headcount') }}
+                {% endif %}
+            </dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Plan'|t('headcount') }}</dt>
+            <dd>{{ plan ? plan.name : 'Unknown' }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Gateway'|t('headcount') }}</dt>
+            <dd>{{ subscription.gateway|capitalize }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Gateway Subscription ID'|t('headcount') }}</dt>
+            <dd><code>{{ subscription.gatewaySubscriptionId ?? '—' }}</code></dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Gateway Customer ID'|t('headcount') }}</dt>
+            <dd><code>{{ subscription.gatewayCustomerId ?? '—' }}</code></dd>
+        </div>
+    </div>
+
+    <hr>
+
+    {{ forms.selectField({
+        label: 'Status'|t('headcount'),
+        name: 'status',
+        value: subscription.status,
+        options: statusOptions,
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Plan'|t('headcount'),
+        name: 'planId',
+        value: subscription.planId,
+        options: planOptions,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Amount'|t('headcount'),
+        name: 'amount',
+        value: subscription.amount,
+        type: 'number',
+        step: '0.01',
+    }) }}
+
+    <div class="meta read-only">
+        <div class="data">
+            <dt>{{ 'Start Date'|t('headcount') }}</dt>
+            <dd>{{ subscription.startDate ? subscription.startDate|date('Y-m-d H:i') : '—' }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'End Date'|t('headcount') }}</dt>
+            <dd>{{ subscription.endDate ? subscription.endDate|date('Y-m-d H:i') : '—' }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Trial Start'|t('headcount') }}</dt>
+            <dd>{{ subscription.trialStartDate ? subscription.trialStartDate|date('Y-m-d H:i') : '—' }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Trial End'|t('headcount') }}</dt>
+            <dd>{{ subscription.trialEndDate ? subscription.trialEndDate|date('Y-m-d H:i') : '—' }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Cancel at Period End'|t('headcount') }}</dt>
+            <dd>{{ subscription.cancelAtPeriodEnd ? 'Yes' : 'No' }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Canceled At'|t('headcount') }}</dt>
+            <dd>{{ subscription.canceledAt ? subscription.canceledAt|date('Y-m-d H:i') : '—' }}</dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Created'|t('headcount') }}</dt>
+            <dd>{{ subscription.dateCreated|date('Y-m-d H:i') }}</dd>
+        </div>
+    </div>
+{% endblock %}

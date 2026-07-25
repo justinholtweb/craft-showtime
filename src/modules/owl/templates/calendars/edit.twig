@@ -1,0 +1,92 @@
+{% extends 'owl/_layouts/plugin' %}
+{% import '_includes/forms' as forms %}
+
+{% set selectedSubnavItem = 'calendars' %}
+{% set fullPageForm = true %}
+
+{% block pluginContent %}
+    <input type="hidden" name="action" value="owl/calendars/save">
+    {{ redirectInput('owl/calendars') }}
+
+    {% if not isNew %}
+        <input type="hidden" name="calendarId" value="{{ calendar.id }}">
+    {% endif %}
+
+    {{ forms.textField({
+        label: 'Name'|t('owl'),
+        id: 'name',
+        name: 'name',
+        value: calendar.name,
+        errors: calendar.getErrors('name'),
+        required: true,
+        first: true,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Handle'|t('owl'),
+        instructions: 'How you’ll refer to this calendar in templates.'|t('owl'),
+        id: 'handle',
+        name: 'handle',
+        class: 'code',
+        value: calendar.handle,
+        errors: calendar.getErrors('handle'),
+        required: true,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Color'|t('owl'),
+        instructions: 'A hex color used in the calendar UI, e.g. #7C5CFF.'|t('owl'),
+        id: 'color',
+        name: 'color',
+        value: calendar.color,
+        size: 10,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Sell tickets (Pro)'|t('owl'),
+        instructions: 'Allow events in this calendar to sell tickets via Commerce.'|t('owl'),
+        id: 'hasTickets',
+        name: 'hasTickets',
+        on: calendar.hasTickets,
+        disabled: not craft.app.plugins.isPluginInstalled('commerce'),
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Front-end URLs'|t('owl') }}</h2>
+
+    {{ forms.textField({
+        label: 'Event URI Format'|t('owl'),
+        instructions: 'The URI format for events in this calendar, e.g. `events/{slug}`. Leave blank for no front-end URL.'|t('owl'),
+        id: 'uriFormat',
+        name: 'uriFormat',
+        class: 'code',
+        value: calendar.uriFormat,
+        errors: calendar.getErrors('uriFormat'),
+        placeholder: 'events/{slug}',
+    }) }}
+
+    {{ forms.textField({
+        label: 'Template'|t('owl'),
+        instructions: 'The template that renders an event in this calendar.'|t('owl'),
+        id: 'template',
+        name: 'template',
+        class: 'code',
+        value: calendar.template,
+        errors: calendar.getErrors('template'),
+        placeholder: 'events/_entry',
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Event Fields'|t('owl') }}</h2>
+    {{ forms.fieldLayoutDesignerField({
+        fieldLayout: calendar.fieldLayout,
+    }) }}
+
+    {% if isNew %}
+        {% js %}
+            new Craft.HandleGenerator('#name', '#handle');
+        {% endjs %}
+    {% endif %}
+{% endblock %}

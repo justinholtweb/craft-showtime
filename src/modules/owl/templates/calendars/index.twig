@@ -1,0 +1,38 @@
+{% extends 'owl/_layouts/plugin' %}
+
+{% set title = 'Calendars'|t('owl') %}
+{% set selectedSubnavItem = 'calendars' %}
+
+{% block actionButton %}
+    <a href="{{ url('owl/calendars/new') }}" class="btn submit add icon">{{ 'New Calendar'|t('owl') }}</a>
+{% endblock %}
+
+{% block pluginContent %}
+    {% if calendars|length %}
+        <table class="data fullwidth collapsible">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|t('owl') }}</th>
+                    <th>{{ 'Handle'|t('owl') }}</th>
+                    <th>{{ 'Tickets'|t('owl') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for calendar in calendars %}
+                    <tr>
+                        <td>
+                            {% if calendar.color %}
+                                <span class="status" style="background-color: {{ calendar.color }}"></span>
+                            {% endif %}
+                            <a href="{{ url('owl/calendars/' ~ calendar.id) }}">{{ calendar.name }}</a>
+                        </td>
+                        <td><code>{{ calendar.handle }}</code></td>
+                        <td>{{ calendar.hasTickets ? 'Yes'|t('owl') : '—' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ 'No calendars yet. Create one to start adding events.'|t('owl') }}</p>
+    {% endif %}
+{% endblock %}

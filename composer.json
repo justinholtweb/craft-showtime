@@ -1,0 +1,78 @@
+{
+    "name": "justinholtweb/craft-showtime",
+    "description": "Showtime \u2014 events, bookings, and memberships for Craft CMS in one plugin",
+    "type": "craft-plugin",
+    "version": "5.0.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "showtime",
+        "events",
+        "calendar",
+        "bookings",
+        "appointments",
+        "memberships",
+        "subscriptions"
+    ],
+    "license": "proprietary",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "authors": [
+        {
+            "name": "Justin Holt",
+            "homepage": "https://justinholt.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "craftcms/cms": "^5.6.0",
+        "ext-json": "*",
+        "rlanvin/php-rrule": "^2.5",
+        "spatie/icalendar-generator": "^3.0",
+        "stripe/stripe-php": "^13.0 || ^14.0 || ^15.0 || ^16.0"
+    },
+    "require-dev": {
+        "craftcms/ecs": "dev-main",
+        "craftcms/phpstan": "dev-main",
+        "craftcms/commerce": "^5.0"
+    },
+    "suggest": {
+        "craftcms/commerce": "Required for Owl's Commerce ticketing features (^5.0)."
+    },
+    "comment-autoload": "Sub-plugin namespaces are autoloaded as PLAIN classes from vendored copies under src/modules/*, never required as craft-plugin Composer packages (that would make craftcms/plugin-installer register them as separately-installable, separately-licensable plugins). src/modules/* is synced one-way from each plugin's own repo (the canonical source) via bin/sync-modules.sh.",
+    "autoload": {
+        "psr-4": {
+            "justinholtweb\\showtime\\": "src/",
+            "justinholtweb\\stub\\": "src/modules/stub/",
+            "justinholtweb\\headcount\\": "src/modules/headcount/",
+            "justinholtweb\\owl\\": "src/modules/owl/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true,
+            "craftcms/plugin-installer": true,
+            "craftcms/generator": true
+        }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse",
+        "ecs": "ecs check --ansi",
+        "ecs-fix": "ecs check --fix --ansi"
+    },
+    "support": {
+        "issues": "https://github.com/justinholtweb/craft-showtime/issues",
+        "source": "https://github.com/justinholtweb/craft-showtime"
+    },
+    "extra": {
+        "name": "Showtime",
+        "handle": "showtime",
+        "developer": "Justin Holt",
+        "developerUrl": "https://justinholt.com",
+        "documentationUrl": "https://github.com/justinholtweb/craft-showtime",
+        "changelogUrl": "https://raw.githubusercontent.com/justinholtweb/craft-showtime/main/CHANGELOG.md",
+        "class": "justinholtweb\\showtime\\Plugin"
+    }
+}

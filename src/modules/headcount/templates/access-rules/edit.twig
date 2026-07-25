@@ -1,0 +1,122 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = title %}
+{% set selectedSubnavItem = 'access-rules' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="headcount/access-rules/save">
+    {% if not isNew %}
+        <input type="hidden" name="ruleId" value="{{ rule.id }}">
+    {% endif %}
+    {{ csrfInput() }}
+    {{ redirectInput('headcount/access-rules/{id}') }}
+
+    {{ forms.textField({
+        first: true,
+        label: 'Name'|t('headcount'),
+        instructions: 'A descriptive name for this rule.'|t('headcount'),
+        name: 'name',
+        value: rule.name,
+        required: true,
+        errors: rule.getErrors('name'),
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Applies To'|t('headcount'),
+        instructions: 'What content does this rule cover? Anything that registers itself as gateable — entries, events, a plugin’s own element type — appears here.'|t('headcount'),
+        name: 'gate',
+        id: 'ruleType',
+        value: gateKey,
+        options: gateOptions,
+        errors: rule.getErrors('type')|merge(rule.getErrors('elementType')),
+    }) }}
+
+    {# One target field per element-type/scope pair, shown by the selector JS. Every one of
+       these posts even while hidden, so they are keyed by pair and the controller reads
+       back only the selected one — sharing a single `targetId` name silently saved the
+       wrong field's value. #}
+    {% for elementType, target in targets %}
+        {% for scope, definition in target.scopes %}
+            {% set key = elementType ~ '|' ~ scope %}
+            {% set mode = target.scopeTargetMode(scope) %}
+            {% if mode != 'none' %}
+                <div data-target-type="{{ key }}"{% if gateKey != key %} style="display:none"{% endif %}>
+                    {% if mode == 'options' %}
+                        {{ forms.selectField({
+                            label: definition.label,
+                            name: 'targetIds[' ~ key ~ ']',
+                            value: gateKey == key ? rule.targetId : '',
+                            options: [{ label: '— Select —'|t('headcount'), value: '' }]|merge(definition.options ?? []),
+                            errors: gateKey == key ? rule.getErrors('targetId') : [],
+                        }) }}
+                    {% else %}
+                        {{ forms.elementSelectField({
+                            label: definition.label,
+                            name: 'targetIds[' ~ key ~ ']',
+                            elementType: target.scopeSelectElementType(scope),
+                            elements: gateKey == key and targetElement ? [targetElement] : [],
+                            limit: 1,
+                            errors: gateKey == key ? rule.getErrors('targetId') : [],
+                        }) }}
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+
+    {{ forms.checkboxSelectField({
+        label: 'Required Plans'|t('headcount'),
+        instructions: 'Users must have an active subscription to one of these plans to access the content.'|t('headcount'),
+        name: 'planIds',
+        values: rule.planIds,
+        options: planOptions,
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Behavior'|t('headcount'),
+        instructions: 'What to do when an unauthorized user tries to access the content.'|t('headcount'),
+        name: 'behavior',
+        value: rule.behavior,
+        options: [
+            { label: 'Redirect to login/pricing', value: 'redirect' },
+            { label: 'Show paywall with teaser', value: 'paywall' },
+            { label: 'Hide (404)', value: 'hide' },
+        ],
+    }) }}
+
+    {{ forms.textField({
+        label: 'Redirect URL'|t('headcount'),
+        instructions: 'URL to redirect to (if behavior is redirect). Leave blank for default.'|t('headcount'),
+        name: 'redirectUrl',
+        value: rule.redirectUrl,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Teaser Length'|t('headcount'),
+        instructions: 'Number of characters to show as teaser (if behavior is paywall).'|t('headcount'),
+        name: 'teaserLength',
+        value: rule.teaserLength,
+        type: 'number',
+        min: 0,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Sort Order'|t('headcount'),
+        instructions: 'Lower numbers have higher priority.'|t('headcount'),
+        name: 'sortOrder',
+        value: rule.sortOrder,
+        type: 'number',
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Enabled'|t('headcount'),
+        name: 'enabled',
+        on: rule.enabled,
+    }) }}
+{% endblock %}
+
+{% js %}
+    new Craft.Headcount.AccessRuleTypeSelector('ruleType');
+{% endjs %}

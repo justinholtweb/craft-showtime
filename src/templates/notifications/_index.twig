@@ -1,0 +1,62 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Notifications'|t('showtime') %}
+{% set selectedSubnavItem = 'notifications' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="showtime/notifications/save">
+
+    <p class="light">
+        {{ 'Every email the bundle sends, in one place. The wording of each one lives in Craft’s system messages, so it renders through the same email template as the rest of your site.'|t('showtime') }}
+    </p>
+
+    <h2>{{ 'Sender'|t('showtime') }}</h2>
+
+    {{ forms.autosuggestField({
+        first: true,
+        label: 'From Name'|t('showtime'),
+        instructions: 'Used for every email below. Leave blank to use Craft’s system sender.'|t('showtime'),
+        name: 'emailFromName',
+        value: settings.emailFromName,
+        suggestEnvVars: true,
+    }) }}
+
+    {{ forms.autosuggestField({
+        label: 'From Email'|t('showtime'),
+        instructions: 'Used for every email below. Leave blank to use Craft’s system sender.'|t('showtime'),
+        name: 'emailFromEmail',
+        value: settings.emailFromEmail,
+        suggestEnvVars: true,
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Messages'|t('showtime') }}</h2>
+
+    {% if grouped is empty %}
+        <p>{{ 'No mounted module sends email.'|t('showtime') }}</p>
+    {% endif %}
+
+    {% for moduleLabel, messages in grouped %}
+        <h3>{{ moduleLabel }}</h3>
+
+        {% for key, message in messages %}
+            {{ forms.lightswitchField({
+                label: message.heading,
+                instructions: message.description,
+                name: 'messages[' ~ key ~ ']',
+                on: message.enabled,
+            }) }}
+
+            <p class="light" style="margin-top:-1em">
+                <a href="{{ cpUrl('settings/email/system-messages') }}">{{ 'Edit the wording'|t('showtime') }}</a>
+                {% if message.variables %}
+                    — {{ 'available:'|t('showtime') }}
+                    {% for name in message.variables %}<code>{% verbatim %}{{{% endverbatim %} {{ name }} {% verbatim %}}}{% endverbatim %}</code>{{ not loop.last ? ' ' }}{% endfor %}
+                {% endif %}
+            </p>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

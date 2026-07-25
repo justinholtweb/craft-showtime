@@ -1,0 +1,29 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.textField({
+    label: "Occurrence horizon (months)"|t('owl'),
+    instructions: "How far ahead occurrences are materialised from a recurrence rule. Rolled forward automatically."|t('owl'),
+    id: 'occurrenceHorizonMonths',
+    name: 'occurrenceHorizonMonths',
+    value: settings.occurrenceHorizonMonths,
+    type: 'number',
+    errors: settings.getErrors('occurrenceHorizonMonths'),
+}) }}
+
+{{ forms.textField({
+    label: "Max occurrences per event"|t('owl'),
+    instructions: "Safety cap on how many occurrences a single event may generate within the horizon."|t('owl'),
+    id: 'maxOccurrencesPerEvent',
+    name: 'maxOccurrencesPerEvent',
+    value: settings.maxOccurrencesPerEvent,
+    type: 'number',
+    errors: settings.getErrors('maxOccurrencesPerEvent'),
+}) }}
+
+{{ forms.lightswitchField({
+    label: "Enable demo templates"|t('owl'),
+    instructions: "Register Owl's example front-end calendar templates."|t('owl'),
+    id: 'enableDemoTemplates',
+    name: 'enableDemoTemplates',
+    on: settings.enableDemoTemplates,
+}) }}

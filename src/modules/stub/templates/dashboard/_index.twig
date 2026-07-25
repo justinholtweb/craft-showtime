@@ -1,0 +1,61 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = 'Dashboard'|t('stub') %}
+{% set selectedSubnavItem = 'dashboard' %}
+
+{% do view.registerAssetBundle('justinholtweb\\stub\\assetbundles\\cp\\CpAssetBundle') %}
+
+{% block content %}
+    <div class="stub-dashboard-grid">
+        <div class="stub-stat-card">
+            <div class="stub-stat-value">{{ stats.todayCount }}</div>
+            <div class="stub-stat-label">{{ "Today's Bookings"|t('stub') }}</div>
+        </div>
+        <div class="stub-stat-card">
+            <div class="stub-stat-value">{{ stats.weekCount }}</div>
+            <div class="stub-stat-label">{{ 'This Week'|t('stub') }}</div>
+        </div>
+        <div class="stub-stat-card">
+            <div class="stub-stat-value">{{ stats.pendingCount }}</div>
+            <div class="stub-stat-label">{{ 'Pending'|t('stub') }}</div>
+        </div>
+        <div class="stub-stat-card">
+            <div class="stub-stat-value">{{ stats.monthlyRevenue|number_format(2) }} {{ settings.defaultCurrency }}</div>
+            <div class="stub-stat-label">{{ 'Monthly Revenue'|t('stub') }}</div>
+        </div>
+    </div>
+
+    <div class="pane">
+        <h2>{{ "Today's Schedule"|t('stub') }}</h2>
+
+        {% if todaysBookings|length %}
+            <div class="stub-today-list">
+                {% for booking in todaysBookings %}
+                    {% set service = booking.getService() %}
+                    {% set customer = booking.getCustomer() %}
+                    {% set provider = booking.getProvider() %}
+                    <div class="stub-booking-item">
+                        <div class="stub-booking-time">
+                            {{ booking.localStartDateTime|date('g:i A', timezone=booking.timezone) }}
+                        </div>
+                        <div class="stub-booking-info">
+                            <div class="stub-booking-service">
+                                <a href="{{ booking.cpEditUrl }}">{{ service ? service.name : booking.referenceNumber }}</a>
+                            </div>
+                            <div class="stub-booking-customer">
+                                {{ customer ? customer.fullName : '' }}
+                                {% if provider %} &middot; {{ provider.name }}{% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status {{ booking.bookingStatus == 'confirmed' ? 'green' : 'orange' }}"></span>
+                            {{ booking.bookingStatus|capitalize }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="light">{{ 'No bookings scheduled for today.'|t('stub') }}</p>
+        {% endif %}
+    </div>
+{% endblock %}

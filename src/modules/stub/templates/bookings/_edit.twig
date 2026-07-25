@@ -1,0 +1,134 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = booking.referenceNumber %}
+{% set selectedSubnavItem = 'bookings' %}
+
+{% block content %}
+    {% import '_includes/forms' as forms %}
+
+    <div class="grid" style="--cols: 2; gap: 24px; display: grid; grid-template-columns: 2fr 1fr;">
+        <div>
+            <div class="pane">
+                <h2>{{ 'Booking Details'|t('stub') }}</h2>
+
+                <table class="data fullwidth">
+                    <tbody>
+                        <tr>
+                            <th>{{ 'Reference'|t('stub') }}</th>
+                            <td><code>{{ booking.referenceNumber }}</code></td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'Service'|t('stub') }}</th>
+                            <td>{{ service ? service.name : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'Provider'|t('stub') }}</th>
+                            <td>{{ provider ? provider.name : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'Date & Time'|t('stub') }}</th>
+                            <td>
+                                {% if booking.localStartDateTime %}
+                                    {{ booking.localStartDateTime|date('M j, Y g:i A', timezone=booking.timezone) }}
+                                    ({{ booking.timezone }})
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'Price'|t('stub') }}</th>
+                            <td>{{ booking.price|number_format(2) }} {{ booking.currency }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ 'Payment Status'|t('stub') }}</th>
+                            <td>
+                                <span class="status {{ booking.paymentStatus == 'paid' ? 'green' : (booking.paymentStatus == 'refunded' ? 'grey' : 'orange') }}"></span>
+                                {{ booking.paymentStatus|capitalize }}
+                            </td>
+                        </tr>
+                        {% if booking.stripePaymentIntentId %}
+                            <tr>
+                                <th>{{ 'Stripe Payment Intent'|t('stub') }}</th>
+                                <td><code>{{ booking.stripePaymentIntentId }}</code></td>
+                            </tr>
+                        {% endif %}
+                        {% if booking.customerNotes %}
+                            <tr>
+                                <th>{{ 'Customer Notes'|t('stub') }}</th>
+                                <td>{{ booking.customerNotes }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if booking.cancellationReason %}
+                            <tr>
+                                <th>{{ 'Cancellation Reason'|t('stub') }}</th>
+                                <td>{{ booking.cancellationReason }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <th>{{ 'Created'|t('stub') }}</th>
+                            <td>{{ booking.dateCreated|date('M j, Y g:i A') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {% if customer %}
+                <div class="pane" style="margin-top: 24px;">
+                    <h2>{{ 'Customer'|t('stub') }}</h2>
+                    <table class="data fullwidth">
+                        <tbody>
+                            <tr><th>{{ 'Name'|t('stub') }}</th><td>{{ customer.firstName }} {{ customer.lastName }}</td></tr>
+                            <tr><th>{{ 'Email'|t('stub') }}</th><td><a href="mailto:{{ customer.email }}">{{ customer.email }}</a></td></tr>
+                            {% if customer.phone %}<tr><th>{{ 'Phone'|t('stub') }}</th><td>{{ customer.phone }}</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <div class="pane">
+                <h2>{{ 'Status'|t('stub') }}</h2>
+                <form method="post">
+                    {{ csrfInput() }}
+                    {{ actionInput('stub/bookings/update-status') }}
+                    {{ hiddenInput('bookingId', booking.id) }}
+
+                    {{ forms.selectField({
+                        label: 'Booking Status'|t('stub'),
+                        name: 'bookingStatus',
+                        value: booking.bookingStatus,
+                        options: statuses|map(s => { label: s.label(), value: s.value }),
+                    }) }}
+
+                    <div id="cancellation-reason" style="{{ booking.bookingStatus != 'cancelled' ? 'display:none' }}">
+                        {{ forms.textareaField({
+                            label: 'Cancellation Reason'|t('stub'),
+                            name: 'cancellationReason',
+                            value: booking.cancellationReason,
+                            rows: 2,
+                        }) }}
+                    </div>
+
+                    {{ forms.textareaField({
+                        label: 'Admin Notes'|t('stub'),
+                        name: 'adminNotes',
+                        value: booking.adminNotes,
+                        rows: 3,
+                    }) }}
+
+                    <button type="submit" class="btn submit">{{ 'Update'|t('stub') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% js %}
+        $('[name="bookingStatus"]').on('change', function() {
+            if ($(this).val() === 'cancelled') {
+                $('#cancellation-reason').show();
+            } else {
+                $('#cancellation-reason').hide();
+            }
+        });
+    {% endjs %}
+{% endblock %}

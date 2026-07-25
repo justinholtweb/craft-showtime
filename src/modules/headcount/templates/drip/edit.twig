@@ -1,0 +1,67 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = title %}
+{% set selectedSubnavItem = 'drip' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="headcount/drip/save">
+    {% if not isNew %}
+        <input type="hidden" name="scheduleId" value="{{ schedule.id }}">
+    {% endif %}
+    {{ csrfInput() }}
+    {{ redirectInput('headcount/drip/{id}') }}
+
+    {{ forms.textField({
+        first: true,
+        label: 'Name'|t('headcount'),
+        instructions: 'A descriptive name for this drip schedule.'|t('headcount'),
+        name: 'name',
+        value: schedule.name,
+        required: true,
+        errors: schedule.getErrors('name'),
+    }) }}
+
+    {{ forms.checkboxSelectField({
+        label: 'Plans'|t('headcount'),
+        instructions: 'Which plans does this drip schedule apply to?'|t('headcount'),
+        name: 'planIds',
+        values: schedule.planIds,
+        options: planOptions,
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Target Type'|t('headcount'),
+        name: 'type',
+        value: schedule.type,
+        options: [
+            { label: 'Section', value: 'section' },
+            { label: 'Entry Type', value: 'entryType' },
+            { label: 'Entry', value: 'entry' },
+        ],
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Section'|t('headcount'),
+        name: 'targetId',
+        value: schedule.type == 'section' ? schedule.targetId : '',
+        options: [{ label: '— Select —', value: '' }]|merge(sectionOptions),
+    }) }}
+
+    {{ forms.textField({
+        label: 'Delay Days'|t('headcount'),
+        instructions: 'Number of days after subscription start to unlock this content.'|t('headcount'),
+        name: 'delayDays',
+        value: schedule.delayDays,
+        type: 'number',
+        min: 0,
+        required: true,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Enabled'|t('headcount'),
+        name: 'enabled',
+        on: schedule.enabled,
+    }) }}
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'owl/_layouts/plugin' %}
+{% import '_includes/forms' as forms %}
+
+{% set selectedSubnavItem = 'events' %}
+{% set title = 'Tickets'|t('owl') %}
+{% set crumbs = [
+    { label: 'Events'|t('owl'), url: url('owl/events') },
+    { label: event.title, url: url('owl/events/' ~ event.id) },
+] %}
+
+{% block content %}
+    <h2>{{ 'Tickets for {title}'|t('owl', { title: event.title }) }}</h2>
+
+    {% if tickets|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|t('owl') }}</th>
+                    <th>{{ 'SKU'|t('owl') }}</th>
+                    <th>{{ 'Price'|t('owl') }}</th>
+                    <th>{{ 'Sold / Capacity'|t('owl') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                    <tr data-id="{{ ticket.id }}">
+                        <td>{{ ticket.ticketName }}</td>
+                        <td><code>{{ ticket.sku }}</code></td>
+                        <td>{{ ticket.price|commerceCurrency(ticket.store.currency) }}</td>
+                        <td>{{ ticket.sold }} / {{ ticket.capacity ?? '∞' }}</td>
+                        <td class="thin">
+                            <a class="delete icon" title="{{ 'Delete'|t('owl') }}" role="button"
+                               data-id="{{ ticket.id }}"></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="light">{{ 'No tickets yet.'|t('owl') }}</p>
+    {% endif %}
+
+    <hr>
+
+    <h2>{{ 'Add a ticket'|t('owl') }}</h2>
+    <form method="post" accept-charset="UTF-8">
+        {{ csrfInput() }}
+        <input type="hidden" name="action" value="owl/tickets/save">
+        <input type="hidden" name="eventId" value="{{ event.id }}">
+
+        {{ forms.textField({
+            label: 'Name'|t('owl'),
+            name: 'ticketName',
+            required: true,
+            placeholder: 'General Admission',
+        }) }}
+
+        {{ forms.textField({
+            label: 'Price'|t('owl'),
+            name: 'price',
+            type: 'number',
+            required: true,
+            placeholder: '25.00',
+        }) }}
+
+        {{ forms.textField({
+            label: 'Capacity'|t('owl'),
+            instructions: 'Leave blank for unlimited.'|t('owl'),
+            name: 'capacity',
+            type: 'number',
+        }) }}
+
+        <div class="buttons">
+            <button type="submit" class="btn submit">{{ 'Add Ticket'|t('owl') }}</button>
+        </div>
+    </form>
+
+    {% js %}
+        $('a.delete[data-id]').on('click', function() {
+            if (!confirm(Craft.t('owl', 'Delete this ticket?'))) return;
+            const id = $(this).data('id');
+            Craft.sendActionRequest('POST', 'owl/tickets/delete', { data: { id: id } })
+                .then(() => { Craft.cp.displayNotice(Craft.t('owl', 'Ticket deleted.')); location.reload(); })
+                .catch(() => { Craft.cp.displayError(Craft.t('owl', 'Couldn’t delete ticket.')); });
+        });
+    {% endjs %}
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Showtime'|t('showtime') %}
+{% set selectedSubnavItem = 'dashboard' %}
+
+{% block content %}
+    <div class="showtime-dashboard">
+        <div class="flex flex-nowrap" style="gap: 14px; flex-wrap: wrap;">
+            {% if canViewBookings and stats.bookings %}
+                {% set b = stats.bookings %}
+                {{ _self.stat('Bookings today'|t('showtime'), b.todayCount, cpUrl('stub/calendar')) }}
+                {{ _self.stat('This week'|t('showtime'), b.weekCount, cpUrl('stub/bookings')) }}
+                {{ _self.stat('Pending'|t('showtime'), b.pendingCount, cpUrl('stub/bookings')) }}
+            {% endif %}
+
+            {% if canViewMembers and stats.memberships %}
+                {{ _self.stat('Active members'|t('showtime'), stats.memberships.activeMembers, cpUrl('headcount/subscriptions')) }}
+            {% endif %}
+        </div>
+
+        {% if canViewRevenue and (stats.bookings or stats.memberships) %}
+            <h2>{{ 'Monthly revenue'|t('showtime') }}</h2>
+
+            <table class="data fullwidth">
+                <tbody>
+                    {% if stats.bookings %}
+                        <tr>
+                            <th>{{ 'Bookings taken this month'|t('showtime') }}</th>
+                            <td class="rightalign">{{ stats.bookings.monthlyRevenue|number_format(2) }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if stats.memberships %}
+                        <tr>
+                            <th>{{ 'Recurring (MRR)'|t('showtime') }}</th>
+                            <td class="rightalign">{{ stats.memberships.mrr|number_format(2) }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <th><strong>{{ 'Combined'|t('showtime') }}</strong></th>
+                        <td class="rightalign"><strong>{{ stats.combinedMonthly|number_format(2) }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p class="light">
+                {{ 'Booking revenue is what was actually collected this month; MRR is the recurring run rate.'|t('showtime') }}
+            </p>
+        {% endif %}
+
+        {% if canViewBookings %}
+            <h2>{{ 'Today’s bookings'|t('showtime') }}</h2>
+
+            {% if todaysBookings|length %}
+                <table class="data fullwidth">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Time'|t('showtime') }}</th>
+                            <th>{{ 'Reference'|t('showtime') }}</th>
+                            <th>{{ 'Status'|t('showtime') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in todaysBookings %}
+                            <tr>
+                                <td>{{ booking.startDateTime ? booking.startDateTime|datetime('short') : '—' }}</td>
+                                <td><a href="{{ booking.cpEditUrl }}">{{ booking.referenceNumber }}</a></td>
+                                <td>{{ booking.bookingStatus|title }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="light">{{ 'Nothing booked for today.'|t('showtime') }}</p>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% macro stat(label, value, url) %}
+    <a href="{{ url }}" class="showtime-stat" style="display: block; flex: 1 1 160px; min-width: 160px; padding: 16px; border: 1px solid var(--hairline-color); border-radius: var(--large-border-radius); text-decoration: none;">
+        <div style="font-size: 30px; line-height: 1.1; font-weight: 500;">{{ value }}</div>
+        <div class="light">{{ label }}</div>
+    </a>
+{% endmacro %}

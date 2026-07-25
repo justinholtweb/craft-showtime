@@ -1,0 +1,31 @@
+<div class="headcount-widget-overview">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+            <div style="font-size: 12px; color: var(--gray-500);">{{ 'Active Members'|t('headcount') }}</div>
+            <div style="font-size: 22px; font-weight: 700;">{{ stats.activeMembers }}</div>
+        </div>
+        <div>
+            <div style="font-size: 12px; color: var(--gray-500);">{{ 'MRR'|t('headcount') }}</div>
+            <div style="font-size: 22px; font-weight: 700;">${{ stats.mrr|number_format(2) }}</div>
+        </div>
+        <div>
+            <div style="font-size: 12px; color: var(--gray-500);">{{ 'Churn'|t('headcount') }}</div>
+            <div style="font-size: 22px; font-weight: 700;">{{ stats.churnRate }}%</div>
+        </div>
+        <div>
+            <div style="font-size: 12px; color: var(--gray-500);">{{ 'Trial Conv.'|t('headcount') }}</div>
+            <div style="font-size: 22px; font-weight: 700;">{{ stats.trialConversionRate }}%</div>
+        </div>
+    </div>
+
+    {% if stats.membersByPlan|length %}
+        <hr style="margin: 12px 0;">
+        <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 6px;">{{ 'By Plan'|t('headcount') }}</div>
+        {% for handle, data in stats.membersByPlan %}
+            <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0;">
+                <span>{{ data.plan.name }}</span>
+                <strong>{{ data.count }}</strong>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>

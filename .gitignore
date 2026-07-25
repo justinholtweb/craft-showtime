@@ -1,0 +1,8 @@
+/vendor
+/node_modules
+composer.lock
+.DS_Store
+.phpunit.cache
+
+# Internal architecture, roadmap and pricing notes — the repo is public.
+PLAN.md

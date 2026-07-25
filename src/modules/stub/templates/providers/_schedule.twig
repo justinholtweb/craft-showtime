@@ -1,0 +1,175 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = provider.name ~ ' — ' ~ 'Schedule'|t('stub') %}
+{% set selectedSubnavItem = 'providers' %}
+
+{% set days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+
+{% block content %}
+    {% import '_includes/forms' as forms %}
+
+    <div class="toolbar">
+        <a href="{{ cpUrl('stub/providers/' ~ provider.id) }}" class="btn">{{ '← Back to Provider'|t('stub') }}</a>
+    </div>
+
+    {# Weekly Schedule #}
+    <h2>{{ 'Weekly Hours'|t('stub') }}</h2>
+    <form method="post" accept-charset="UTF-8">
+        {{ csrfInput() }}
+        {{ actionInput('stub/providers/save-schedule') }}
+        {{ hiddenInput('providerId', provider.id) }}
+
+        <p class="light">{{ 'Times are in the provider\'s timezone:'|t('stub') }} <strong>{{ provider.timezone }}</strong></p>
+
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Day'|t('stub') }}</th>
+                    <th>{{ 'Enabled'|t('stub') }}</th>
+                    <th>{{ 'Start'|t('stub') }}</th>
+                    <th>{{ 'End'|t('stub') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in 0..6 %}
+                    {% set schedule = null %}
+                    {% for s in provider.schedules|filter(s => s.dayOfWeek == i) %}
+                        {% set schedule = s %}
+                    {% endfor %}
+                    <tr>
+                        <td id="schedule-day-{{ i }}">{{ days[i] }}</td>
+                        <td>
+                            {{ hiddenInput('schedules[' ~ i ~ '][dayOfWeek]', i) }}
+                            {{ forms.lightswitch({
+                                name: 'schedules[' ~ i ~ '][enabled]',
+                                on: schedule ? schedule.enabled : (i >= 1 and i <= 5),
+                                labelledBy: 'schedule-day-' ~ i,
+                            }) }}
+                        </td>
+                        <td>
+                            <input type="time" name="schedules[{{ i }}][startTime]" value="{{ schedule ? schedule.startTime : '09:00' }}">
+                        </td>
+                        <td>
+                            <input type="time" name="schedules[{{ i }}][endTime]" value="{{ schedule ? schedule.endTime : '17:00' }}">
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+
+        {# Breaks #}
+        <h2>{{ 'Breaks'|t('stub') }}</h2>
+        <div id="breaks-container">
+            {% for brk in provider.breaks %}
+                <div class="break-row" style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+                    <select name="breaks[{{ loop.index0 }}][dayOfWeek]">
+                        {% for i in 0..6 %}
+                            <option value="{{ i }}" {{ brk.dayOfWeek == i ? 'selected' }}>{{ days[i] }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="time" name="breaks[{{ loop.index0 }}][startTime]" value="{{ brk.startTime }}">
+                    <input type="time" name="breaks[{{ loop.index0 }}][endTime]" value="{{ brk.endTime }}">
+                    <input type="text" name="breaks[{{ loop.index0 }}][label]" value="{{ brk.label }}" placeholder="{{ 'Label (optional)'|t('stub') }}">
+                    <a class="delete icon remove-break" title="{{ 'Remove'|t('app') }}"></a>
+                </div>
+            {% endfor %}
+        </div>
+        <a id="add-break" class="btn small">{{ '+ Add Break'|t('stub') }}</a>
+
+        <hr>
+
+        <button type="submit" class="btn submit">{{ 'Save Schedule'|t('stub') }}</button>
+    </form>
+
+    <hr>
+
+    {# Blocked Dates #}
+    <h2>{{ 'Blocked Dates'|t('stub') }}</h2>
+
+    {% if provider.blockedDates|length %}
+        <table class="data fullwidth" style="margin-bottom: 20px;">
+            <thead>
+                <tr>
+                    <th>{{ 'Start Date'|t('stub') }}</th>
+                    <th>{{ 'End Date'|t('stub') }}</th>
+                    <th>{{ 'Reason'|t('stub') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bd in provider.blockedDates %}
+                    <tr data-id="{{ bd.id }}">
+                        <td>{{ bd.startDate }}</td>
+                        <td>{{ bd.endDate }}</td>
+                        <td>{{ bd.reason }}</td>
+                        <td class="thin">
+                            <a class="delete icon delete-blocked" data-id="{{ bd.id }}"></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <form method="post" accept-charset="UTF-8" style="display: flex; gap: 10px; align-items: flex-end;">
+        {{ csrfInput() }}
+        {{ actionInput('stub/providers/add-blocked-date') }}
+        {{ hiddenInput('providerId', provider.id) }}
+
+        <div>
+            <label>{{ 'Start Date'|t('stub') }}</label>
+            <input type="date" name="startDate" required>
+        </div>
+        <div>
+            <label>{{ 'End Date'|t('stub') }}</label>
+            <input type="date" name="endDate">
+        </div>
+        <div>
+            <label>{{ 'Reason'|t('stub') }}</label>
+            <input type="text" name="reason" placeholder="{{ 'Vacation, holiday, etc.'|t('stub') }}">
+        </div>
+        <button type="submit" class="btn">{{ 'Add'|t('stub') }}</button>
+    </form>
+
+    {% js %}
+        (function() {
+            var breakIndex = {{ provider.breaks|length }};
+
+            $('#add-break').on('click', function() {
+                var days = {{ days|json_encode|raw }};
+                var html = '<div class="break-row" style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">';
+                html += '<select name="breaks[' + breakIndex + '][dayOfWeek]">';
+                for (var i = 0; i < 7; i++) {
+                    html += '<option value="' + i + '">' + days[i] + '</option>';
+                }
+                html += '</select>';
+                html += '<input type="time" name="breaks[' + breakIndex + '][startTime]" value="12:00">';
+                html += '<input type="time" name="breaks[' + breakIndex + '][endTime]" value="13:00">';
+                html += '<input type="text" name="breaks[' + breakIndex + '][label]" placeholder="Label (optional)">';
+                html += '<a class="delete icon remove-break" title="Remove"></a>';
+                html += '</div>';
+                $('#breaks-container').append(html);
+                breakIndex++;
+            });
+
+            $(document).on('click', '.remove-break', function() {
+                $(this).closest('.break-row').remove();
+            });
+
+            $('.delete-blocked').on('click', function(e) {
+                e.preventDefault();
+                var $row = $(this).closest('tr');
+                var id = $(this).data('id');
+
+                Craft.sendActionRequest('POST', 'stub/providers/delete-blocked-date', {
+                    data: { id: id }
+                }).then(function() {
+                    $row.remove();
+                    Craft.cp.displayNotice('{{ "Blocked date removed."|t("stub") }}');
+                });
+            });
+        })();
+    {% endjs %}
+{% endblock %}

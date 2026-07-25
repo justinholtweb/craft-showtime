@@ -1,0 +1,384 @@
+.stub-booking-form {
+    --stub-primary: #2563eb;
+    --stub-primary-hover: #1d4ed8;
+    --stub-bg: #ffffff;
+    --stub-border: #e5e7eb;
+    --stub-text: #111827;
+    --stub-text-muted: #6b7280;
+    --stub-radius: 8px;
+    --stub-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    color: var(--stub-text);
+}
+
+.stub-booking-form * {
+    box-sizing: border-box;
+}
+
+/* Progress bar */
+.stub-progress {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 32px;
+}
+
+.stub-progress-step {
+    flex: 1;
+    height: 4px;
+    background: var(--stub-border);
+    border-radius: 2px;
+    transition: background 0.3s;
+}
+
+.stub-progress-step.active {
+    background: var(--stub-primary);
+}
+
+/* Steps */
+.stub-step {
+    display: none;
+}
+
+.stub-step.active {
+    display: block;
+}
+
+.stub-step h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 16px;
+}
+
+/* Service cards */
+.stub-service-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stub-service-card {
+    border: 2px solid var(--stub-border);
+    border-radius: var(--stub-radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.stub-service-card:hover {
+    border-color: var(--stub-primary);
+    box-shadow: var(--stub-shadow);
+}
+
+.stub-service-card.selected {
+    border-color: var(--stub-primary);
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.stub-service-card .stub-service-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.stub-service-card .stub-service-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 4px;
+    font-size: 0.875rem;
+    color: var(--stub-text-muted);
+}
+
+.stub-service-card .stub-service-desc {
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: var(--stub-text-muted);
+}
+
+/* Provider cards */
+.stub-provider-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stub-provider-card {
+    border: 2px solid var(--stub-border);
+    border-radius: var(--stub-radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.stub-provider-card:hover,
+.stub-provider-card.selected {
+    border-color: var(--stub-primary);
+}
+
+.stub-provider-card .stub-provider-name {
+    font-weight: 600;
+}
+
+.stub-provider-card .stub-provider-bio {
+    font-size: 0.875rem;
+    color: var(--stub-text-muted);
+    margin-top: 4px;
+}
+
+/* Calendar */
+.stub-calendar {
+    margin-bottom: 16px;
+}
+
+.stub-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.stub-calendar-header button {
+    background: none;
+    border: 1px solid var(--stub-border);
+    border-radius: var(--stub-radius);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.stub-calendar-header button:hover {
+    background: var(--stub-border);
+}
+
+.stub-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.stub-calendar-day-label {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--stub-text-muted);
+    padding: 4px;
+}
+
+.stub-calendar-day {
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: var(--stub-radius);
+    font-size: 0.875rem;
+    cursor: default;
+    color: var(--stub-text-muted);
+}
+
+.stub-calendar-day.available {
+    cursor: pointer;
+    color: var(--stub-text);
+    font-weight: 500;
+}
+
+.stub-calendar-day.available:hover {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.stub-calendar-day.selected {
+    background: var(--stub-primary);
+    color: white;
+}
+
+.stub-calendar-day.other-month {
+    visibility: hidden;
+}
+
+/* Time slots */
+.stub-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.stub-slot {
+    border: 1px solid var(--stub-border);
+    border-radius: var(--stub-radius);
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.stub-slot:hover {
+    border-color: var(--stub-primary);
+    background: rgba(37, 99, 235, 0.04);
+}
+
+.stub-slot.selected {
+    border-color: var(--stub-primary);
+    background: var(--stub-primary);
+    color: white;
+}
+
+/* Form fields */
+.stub-form-group {
+    margin-bottom: 16px;
+}
+
+.stub-form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.stub-form-group input,
+.stub-form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--stub-border);
+    border-radius: var(--stub-radius);
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.stub-form-group input:focus,
+.stub-form-group textarea:focus {
+    outline: none;
+    border-color: var(--stub-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.stub-form-group .stub-error {
+    color: #dc2626;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+/* Buttons */
+.stub-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: var(--stub-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.stub-btn-primary {
+    background: var(--stub-primary);
+    color: white;
+}
+
+.stub-btn-primary:hover {
+    background: var(--stub-primary-hover);
+}
+
+.stub-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--stub-border);
+    color: var(--stub-text);
+}
+
+.stub-btn-secondary:hover {
+    background: var(--stub-border);
+}
+
+.stub-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.stub-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+}
+
+/* Confirmation */
+.stub-confirmation {
+    text-align: center;
+    padding: 24px 0;
+}
+
+.stub-confirmation .stub-check {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #10b981;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 2rem;
+}
+
+.stub-confirmation h3 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.stub-confirmation .stub-ref {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--stub-primary);
+    margin-bottom: 16px;
+}
+
+.stub-summary {
+    background: #f9fafb;
+    border-radius: var(--stub-radius);
+    padding: 16px;
+    text-align: left;
+    margin-top: 16px;
+}
+
+.stub-summary dt {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: var(--stub-text-muted);
+    margin-top: 12px;
+}
+
+.stub-summary dt:first-child {
+    margin-top: 0;
+}
+
+.stub-summary dd {
+    margin: 2px 0 0;
+    font-size: 0.95rem;
+}
+
+/* Stripe */
+#stub-payment-element {
+    margin: 16px 0;
+}
+
+/* Loading */
+.stub-loading {
+    text-align: center;
+    padding: 24px;
+    color: var(--stub-text-muted);
+}
+
+.stub-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--stub-border);
+    border-top-color: var(--stub-primary);
+    border-radius: 50%;
+    animation: stub-spin 0.6s linear infinite;
+}
+
+@keyframes stub-spin {
+    to { transform: rotate(360deg); }
+}

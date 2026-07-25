@@ -1,0 +1,46 @@
+{#
+ # Owl demo: upcoming occurrences list.
+ # craft.owl.upcoming() returns occurrence rows (title, start/end UTC, timezone, uri, color).
+ #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'Upcoming Events'|t('owl') }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #1f2933; }
+        .owl-wrap { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.4rem; }
+        a { color: #7c5cff; text-decoration: none; }
+        ul { list-style: none; padding: 0; }
+        li { background: #fff; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: .6rem; box-shadow: 0 1px 3px rgba(0,0,0,.06); border-left: 4px solid var(--c, #7c5cff); }
+        .when { color: #616e7c; font-size: .9rem; }
+    </style>
+</head>
+<body>
+    <div class="owl-wrap">
+        <h1>🦉 {{ 'Upcoming Events'|t('owl') }}</h1>
+        <p><a href="{{ siteUrl('owl/calendar') }}">{{ 'Calendar view'|t('owl') }}</a></p>
+
+        {% set occurrences = craft.owl.upcoming(25) %}
+        {% if occurrences|length %}
+            <ul>
+                {% for occ in occurrences %}
+                    {% set start = occ.start|date('l, F j, Y · g:i A', timezone=occ.timezone) %}
+                    <li style="--c: {{ occ.color ?: '#7c5cff' }}">
+                        {% if occ.uri %}
+                            <a href="{{ siteUrl(occ.uri) }}"><strong>{{ occ.title }}</strong></a>
+                        {% else %}
+                            <strong>{{ occ.title }}</strong>
+                        {% endif %}
+                        <div class="when">{{ start }}</div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>{{ 'No upcoming events.'|t('owl') }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

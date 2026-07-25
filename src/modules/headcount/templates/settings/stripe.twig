@@ -1,0 +1,58 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Stripe Settings'|t('headcount') %}
+{% set selectedSubnavItem = 'settings' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="headcount/settings/save">
+    {{ csrfInput() }}
+
+    {{ forms.lightswitchField({
+        label: 'Enable Stripe'|t('headcount'),
+        name: 'stripeEnabled',
+        on: settings.stripeEnabled,
+    }) }}
+
+    {{ forms.autosuggestField({
+        label: 'Secret Key'|t('headcount'),
+        instructions: 'Your Stripe secret key (starts with sk_). Supports environment variables.'|t('headcount'),
+        name: 'stripeSecretKey',
+        suggestEnvVars: true,
+        value: settings.stripeSecretKey,
+    }) }}
+
+    {{ forms.autosuggestField({
+        label: 'Publishable Key'|t('headcount'),
+        instructions: 'Your Stripe publishable key (starts with pk_). Supports environment variables.'|t('headcount'),
+        name: 'stripePublishableKey',
+        suggestEnvVars: true,
+        value: settings.stripePublishableKey,
+    }) }}
+
+    {{ forms.autosuggestField({
+        label: 'Webhook Signing Secret'|t('headcount'),
+        instructions: 'Webhook signing secret (starts with whsec_). Supports environment variables.'|t('headcount'),
+        name: 'stripeWebhookSecret',
+        suggestEnvVars: true,
+        value: settings.stripeWebhookSecret,
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Webhook Endpoint'|t('headcount') }}</h2>
+    <p>{{ 'Configure your Stripe webhook to point to:'|t('headcount') }}</p>
+    <p><code>{{ siteUrl('actions/headcount/webhook/stripe') }}</code></p>
+    <p>{{ 'Events to listen for:'|t('headcount') }}</p>
+    <ul>
+        <li><code>checkout.session.completed</code></li>
+        <li><code>customer.subscription.created</code></li>
+        <li><code>customer.subscription.updated</code></li>
+        <li><code>customer.subscription.deleted</code></li>
+        <li><code>invoice.paid</code></li>
+        <li><code>invoice.payment_failed</code></li>
+        <li><code>invoice.payment_action_required</code></li>
+        <li><code>customer.subscription.trial_will_end</code></li>
+    </ul>
+{% endblock %}

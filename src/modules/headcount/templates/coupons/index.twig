@@ -1,0 +1,51 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Coupons'|t('headcount') %}
+{% set selectedSubnavItem = 'coupons' %}
+
+{% block actionButton %}
+    <a href="{{ cpUrl('headcount/coupons/new') }}" class="btn submit">{{ 'New Coupon'|t('headcount') }}</a>
+{% endblock %}
+
+{% block content %}
+    {% if coupons|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Code'|t('headcount') }}</th>
+                    <th>{{ 'Description'|t('headcount') }}</th>
+                    <th>{{ 'Discount'|t('headcount') }}</th>
+                    <th>{{ 'Uses'|t('headcount') }}</th>
+                    <th>{{ 'Expires'|t('headcount') }}</th>
+                    <th>{{ 'Status'|t('headcount') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for coupon in coupons %}
+                    <tr>
+                        <td><a href="{{ cpUrl('headcount/coupons/' ~ coupon.id) }}"><strong><code>{{ coupon.code }}</code></strong></a></td>
+                        <td>{{ coupon.description ?? '—' }}</td>
+                        <td>
+                            {% if coupon.discountType == 'percent' %}
+                                {{ coupon.discountAmount }}%
+                            {% else %}
+                                {{ coupon.discountAmount|number_format(2) }} flat
+                            {% endif %}
+                        </td>
+                        <td>{{ coupon.currentUses }}{% if coupon.maxUses %} / {{ coupon.maxUses }}{% endif %}</td>
+                        <td>{{ coupon.expiresAt ? coupon.expiresAt|date('Y-m-d') : '—' }}</td>
+                        <td>
+                            {% if coupon.enabled %}
+                                <span class="status green"></span> {{ 'Active'|t('headcount') }}
+                            {% else %}
+                                <span class="status"></span> {{ 'Disabled'|t('headcount') }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ 'No coupons yet. Create discount codes for your membership plans.'|t('headcount') }}</p>
+    {% endif %}
+{% endblock %}

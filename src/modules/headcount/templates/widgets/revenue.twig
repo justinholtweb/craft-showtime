@@ -1,0 +1,20 @@
+<div class="headcount-widget-revenue">
+    <div style="text-align: center; margin-bottom: 12px;">
+        <div style="font-size: 12px; color: var(--gray-500);">{{ 'Monthly Recurring Revenue'|t('headcount') }}</div>
+        <div style="font-size: 28px; font-weight: 700;">${{ mrr|number_format(2) }}</div>
+    </div>
+
+    {% if revenueOverTime|length %}
+        <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 6px;">{{ 'Last 30 Days'|t('headcount') }}</div>
+        <table class="data fullwidth" style="font-size: 12px;">
+            <tbody>
+                {% for row in revenueOverTime|slice(-7) %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td style="text-align: right;">${{ row.revenue|number_format(2) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>

@@ -1,0 +1,47 @@
+{#
+ # Owl demo: single event detail.
+ # Rendered for a calendar whose Template is set to `owl/_event` (the `event` variable is the
+ # Event element). Times are shown in the event's own timezone.
+ #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ event.title }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #1f2933; }
+        .owl-wrap { max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+        a { color: #7c5cff; }
+        .card { background: #fff; border-radius: 12px; padding: 1.5rem 1.75rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+        .meta { color: #616e7c; margin: .25rem 0; }
+        .btn { display: inline-block; margin-top: 1rem; background: #7c5cff; color: #fff; padding: .5rem 1rem; border-radius: 8px; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="owl-wrap">
+        <p><a href="{{ siteUrl('owl/upcoming') }}">&larr; {{ 'All events'|t('owl') }}</a></p>
+        <div class="card">
+            <h1>{{ event.title }}</h1>
+
+            {% set tz = event.timezone %}
+            {% if event.allDay %}
+                <p class="meta">{{ event.startDate|date('l, F j, Y', timezone=tz) }}</p>
+            {% else %}
+                <p class="meta">{{ event.startDate|date('l, F j, Y', timezone=tz) }}</p>
+                <p class="meta">{{ event.startDate|date('g:i A', timezone=tz) }} – {{ event.endDate|date('g:i A', timezone=tz) }} ({{ tz }})</p>
+            {% endif %}
+
+            {% if event.calendar %}
+                <p class="meta">{{ 'Calendar'|t('owl') }}: {{ event.calendar.name }}</p>
+            {% endif %}
+
+            {% if event.repeating %}
+                <p class="meta">{{ 'Repeats'|t('owl') }}: <code>{{ event.rrule }}</code></p>
+            {% endif %}
+
+            <a class="btn" href="{{ siteUrl('owl/event/' ~ event.id ~ '.ics') }}">{{ 'Add to calendar (.ics)'|t('owl') }}</a>
+        </div>
+    </div>
+</body>
+</html>

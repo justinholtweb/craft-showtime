@@ -1,0 +1,6 @@
+{% extends '_layouts/cp' %}
+
+{# Only set defaults here. Do NOT override Craft's `main` block — it wraps
+   `.content-grid__main` / `#content.content-pane`, and replacing it drops the
+   page out of the content grid's main column. Child templates define `content`. #}
+{% set selectedSubnavItem = selectedSubnavItem ?? 'dashboard' %}

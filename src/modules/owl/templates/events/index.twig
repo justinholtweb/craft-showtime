@@ -1,0 +1,9 @@
+{% extends '_layouts/elementindex' %}
+
+{% set title = 'Events'|t('owl') %}
+{% set selectedSubnavItem = 'events' %}
+{% set showSiteMenu = true %}
+
+{% block actionButton %}
+    <a href="{{ url('owl/events/new') }}" class="btn submit add icon">{{ 'New Event'|t('owl') }}</a>
+{% endblock %}

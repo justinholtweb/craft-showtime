@@ -1,0 +1,20 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = 'Calendar'|t('stub') %}
+{% set selectedSubnavItem = 'calendar' %}
+
+{% do view.registerAssetBundle('justinholtweb\\stub\\assetbundles\\calendar\\CalendarAssetBundle') %}
+
+{% block content %}
+    <div class="toolbar" style="margin-bottom: 16px;">
+        <label for="stub-provider-filter">{{ 'Filter by Provider:'|t('stub') }}</label>
+        <select id="stub-provider-filter">
+            <option value="">{{ 'All Providers'|t('stub') }}</option>
+            {% for provider in providers %}
+                <option value="{{ provider.id }}">{{ provider.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="stub-calendar-view"></div>
+{% endblock %}

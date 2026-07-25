@@ -1,0 +1,21 @@
+<h3>{{ 'Select a Service'|t('stub') }}</h3>
+
+<div class="stub-service-list">
+    {% for service in services %}
+        <div class="stub-service-card"
+             data-id="{{ service.id }}"
+             data-name="{{ service.name }}"
+             data-duration="{{ service.duration }}"
+             data-price="{{ service.price }}"
+             data-currency="{{ service.currency }}">
+            <div class="stub-service-name">{{ service.name }}</div>
+            <div class="stub-service-meta">
+                <span>{{ service.duration }} min</span>
+                <span>{{ service.price > 0 ? service.price|number_format(2) ~ ' ' ~ service.currency : 'Free'|t('stub') }}</span>
+            </div>
+            {% if service.description %}
+                <div class="stub-service-desc">{{ service.description }}</div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>

@@ -1,0 +1,75 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Email Settings'|t('headcount') %}
+{% set selectedSubnavItem = 'settings' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="headcount/settings/save">
+    {{ csrfInput() }}
+
+    <p>{{ 'Headcount uses Craft\'s built-in mailer to send transactional emails. Configure your email transport in Craft\'s Email Settings.'|t('headcount') }}</p>
+
+    <hr>
+
+    <h2>{{ 'Email Notifications'|t('headcount') }}</h2>
+
+    {{ forms.lightswitchField({
+        label: 'Welcome Email'|t('headcount'),
+        instructions: 'Send when a new subscription is created.'|t('headcount'),
+        name: 'sendWelcomeEmail',
+        on: settings.sendWelcomeEmail,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Payment Receipt'|t('headcount'),
+        instructions: 'Send when a payment is successfully processed.'|t('headcount'),
+        name: 'sendPaymentReceiptEmail',
+        on: settings.sendPaymentReceiptEmail,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Payment Failed'|t('headcount'),
+        instructions: 'Send when a payment fails.'|t('headcount'),
+        name: 'sendPaymentFailedEmail',
+        on: settings.sendPaymentFailedEmail,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Expiration Reminder'|t('headcount'),
+        instructions: 'Send before a subscription expires.'|t('headcount'),
+        name: 'sendExpirationReminderEmail',
+        on: settings.sendExpirationReminderEmail,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Reminder Days Before'|t('headcount'),
+        name: 'expirationReminderDays',
+        value: settings.expirationReminderDays,
+        type: 'number',
+        min: 1,
+        size: 5,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Trial Ending'|t('headcount'),
+        instructions: 'Send when a trial is about to end.'|t('headcount'),
+        name: 'sendTrialEndingEmail',
+        on: settings.sendTrialEndingEmail,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Cancellation Confirmation'|t('headcount'),
+        instructions: 'Send when a subscription is canceled.'|t('headcount'),
+        name: 'sendCancellationEmail',
+        on: settings.sendCancellationEmail,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Drip Content Unlocked'|t('headcount'),
+        instructions: 'Send when new drip content becomes available.'|t('headcount'),
+        name: 'sendDripUnlockedEmail',
+        on: settings.sendDripUnlockedEmail,
+    }) }}
+{% endblock %}

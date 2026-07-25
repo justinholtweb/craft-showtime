@@ -1,0 +1,53 @@
+<h3>{{ 'Your Information'|t('stub') }}</h3>
+
+<div class="stub-form-group">
+    <label for="stub-firstName">{{ 'First Name'|t('stub') }} *</label>
+    <input type="text" name="stub-firstName" id="stub-firstName" required>
+    <div class="stub-error"></div>
+</div>
+
+<div class="stub-form-group">
+    <label for="stub-lastName">{{ 'Last Name'|t('stub') }} *</label>
+    <input type="text" name="stub-lastName" id="stub-lastName" required>
+    <div class="stub-error"></div>
+</div>
+
+<div class="stub-form-group">
+    <label for="stub-email">{{ 'Email'|t('stub') }} *</label>
+    <input type="email" name="stub-email" id="stub-email" required>
+    <div class="stub-error"></div>
+</div>
+
+<div class="stub-form-group">
+    <label for="stub-phone">{{ 'Phone'|t('stub') }} {{ settings.requirePhone ? '*' : '' }}</label>
+    <input type="tel" name="stub-phone" id="stub-phone" {{ settings.requirePhone ? 'required' : '' }}>
+    <div class="stub-error"></div>
+</div>
+
+{% if settings.allowCustomerNotes %}
+    <div class="stub-form-group">
+        <label for="stub-customerNotes">{{ 'Notes'|t('stub') }}</label>
+        <textarea name="stub-customerNotes" id="stub-customerNotes" rows="3" placeholder="{{ 'Any special requests or notes...'|t('stub') }}"></textarea>
+    </div>
+{% endif %}
+
+{% if settings.termsUrl %}
+    <div class="stub-form-group">
+        <label>
+            <input type="checkbox" name="stub-terms" required>
+            {{ 'I agree to the'|t('stub') }} <a href="{{ settings.termsUrl }}" target="_blank">{{ 'Terms & Conditions'|t('stub') }}</a>
+        </label>
+    </div>
+{% endif %}
+
+{% if settings.enableHoneypot %}
+    <div style="position:absolute;left:-9999px;height:0;width:0;overflow:hidden;" aria-hidden="true">
+        <label for="{{ settings.honeypotFieldName }}">Leave this field empty</label>
+        <input type="text" name="{{ settings.honeypotFieldName }}" id="{{ settings.honeypotFieldName }}" tabindex="-1" autocomplete="off">
+    </div>
+{% endif %}
+
+<div class="stub-actions">
+    <button type="button" class="stub-btn stub-btn-secondary" data-stub-action="prev">{{ '← Back'|t('stub') }}</button>
+    <button type="button" class="stub-btn stub-btn-primary" data-stub-action="submit-info">{{ 'Book Now →'|t('stub') }}</button>
+</div>

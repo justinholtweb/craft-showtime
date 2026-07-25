@@ -1,0 +1,108 @@
+{% extends 'owl/_layouts/plugin' %}
+{% import '_includes/forms' as forms %}
+
+{% set selectedSubnavItem = 'events' %}
+{% set fullPageForm = true %}
+
+{% block pluginContent %}
+    <input type="hidden" name="action" value="owl/events/save">
+    {{ redirectInput('owl/events') }}
+
+    {% if not isNew %}
+        <input type="hidden" name="eventId" value="{{ event.id }}">
+    {% endif %}
+
+    {{ forms.textField({
+        label: 'Title'|t('owl'),
+        id: 'title',
+        name: 'title',
+        value: event.title,
+        errors: event.getErrors('title'),
+        required: true,
+        first: true,
+    }) }}
+
+    {% if calendars|length %}
+        {{ forms.selectField({
+            label: 'Calendar'|t('owl'),
+            instructions: 'Which calendar this event belongs to.'|t('owl'),
+            id: 'calendarId',
+            name: 'calendarId',
+            value: event.calendarId,
+            options: calendarOptions,
+            errors: event.getErrors('calendarId'),
+            required: true,
+        }) }}
+    {% else %}
+        <div class="field">
+            <div class="heading"><label>{{ 'Calendar'|t('owl') }}</label></div>
+            <p class="error">
+                {{ 'No calendars exist yet. Create one first.'|t('owl') }}
+                <a href="{{ url('owl/calendars/new') }}">{{ 'New calendar'|t('owl') }}</a>
+            </p>
+        </div>
+    {% endif %}
+
+    {{ forms.lightswitchField({
+        label: 'All day'|t('owl'),
+        id: 'allDay',
+        name: 'allDay',
+        on: event.allDay,
+    }) }}
+
+    {% set eventTz = event.timezone ?: craft.app.getTimeZone() %}
+    <div class="flex">
+        <div>
+            {{ forms.dateTimeField({
+                label: 'Starts'|t('owl'),
+                id: 'startDate',
+                name: 'startDate',
+                value: event.startDate,
+                timeZone: eventTz,
+                errors: event.getErrors('startDate'),
+                required: true,
+            }) }}
+        </div>
+        <div>
+            {{ forms.dateTimeField({
+                label: 'Ends'|t('owl'),
+                id: 'endDate',
+                name: 'endDate',
+                value: event.endDate,
+                timeZone: eventTz,
+                errors: event.getErrors('endDate'),
+                required: true,
+            }) }}
+        </div>
+    </div>
+
+    {{ forms.timeZoneField({
+        label: 'Time zone'|t('owl'),
+        instructions: 'The timezone the event occurs in. Recurrence is expanded in this zone.'|t('owl'),
+        id: 'timezone',
+        name: 'timezone',
+        value: event.timezone,
+        errors: event.getErrors('timezone'),
+    }) }}
+
+    {{ forms.textField({
+        label: 'Recurrence rule (RRULE)'|t('owl'),
+        instructions: 'An RFC 5545 RRULE, e.g. `FREQ=WEEKLY;BYDAY=MO;COUNT=12`. Leave blank for a one-off event.'|t('owl'),
+        id: 'rrule',
+        name: 'rrule',
+        value: event.rrule,
+        errors: event.getErrors('rrule'),
+        code: true,
+        placeholder: 'FREQ=WEEKLY;BYDAY=MO',
+    }) }}
+
+    {% if not isNew and event.repeating %}
+        {% set occurrences = craft.owl.occurrenceCount(event) %}
+        <p class="light">{{ '{n} occurrences materialised.'|t('owl', { n: occurrences }) }}</p>
+    {% endif %}
+
+    {% if ticketingEnabled %}
+        <hr>
+        <a href="{{ url('owl/events/' ~ event.id ~ '/tickets') }}" class="btn">{{ 'Manage tickets'|t('owl') }}</a>
+    {% endif %}
+{% endblock %}

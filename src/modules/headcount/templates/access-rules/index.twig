@@ -1,0 +1,49 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Access Rules'|t('headcount') %}
+{% set selectedSubnavItem = 'access-rules' %}
+
+{% block actionButton %}
+    <a href="{{ cpUrl('headcount/access-rules/new') }}" class="btn submit">{{ 'New Access Rule'|t('headcount') }}</a>
+{% endblock %}
+
+{% block content %}
+    {% if rules|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|t('headcount') }}</th>
+                    <th>{{ 'Applies To'|t('headcount') }}</th>
+                    <th>{{ 'Behavior'|t('headcount') }}</th>
+                    <th>{{ 'Plans'|t('headcount') }}</th>
+                    <th>{{ 'Status'|t('headcount') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in rules %}
+                    <tr>
+                        <td><a href="{{ cpUrl('headcount/access-rules/' ~ rule.id) }}"><strong>{{ rule.name }}</strong></a></td>
+                        <td>{{ rule.scopeDescription }}</td>
+                        <td>{{ rule.behavior }}</td>
+                        <td>
+                            {% if rule.planIds %}
+                                {{ rule.planIds|length }} plan(s)
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if rule.enabled %}
+                                <span class="status green"></span> {{ 'Enabled'|t('headcount') }}
+                            {% else %}
+                                <span class="status"></span> {{ 'Disabled'|t('headcount') }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ 'No access rules yet. Create rules to gate content behind membership plans.'|t('headcount') }}</p>
+    {% endif %}
+{% endblock %}

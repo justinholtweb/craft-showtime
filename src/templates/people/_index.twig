@@ -1,0 +1,139 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'People'|t('showtime') %}
+{% set selectedSubnavItem = 'people' %}
+
+{% block content %}
+    <form method="get" action="{{ cpUrl('showtime/people') }}">
+        {{ forms.text({
+            name: 'q',
+            value: query,
+            placeholder: 'Name, email or phone'|t('showtime'),
+            autofocus: true,
+        }) }}
+        <button type="submit" class="btn submit">{{ 'Search'|t('showtime') }}</button>
+    </form>
+
+    {% if results %}
+        <h2>{{ '{n} matches'|t('showtime', { n: results|length }) }}</h2>
+        <table class="data fullwidth">
+            <tbody>
+                {% for email, name in results %}
+                    <tr>
+                        <td><a href="{{ cpUrl('showtime/people', { email: email }) }}"><strong>{{ name }}</strong></a></td>
+                        <td class="light">{{ email }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elseif query and not person %}
+        <p>{{ 'Nobody matches that. An exact email address always works, even for someone known only from a ticket order.'|t('showtime') }}</p>
+    {% endif %}
+
+    {% if person %}
+        <h2>{{ person.name }}</h2>
+        <p class="light">
+            {{ person.email }}
+            {% if person.user %}
+                — <a href="{{ person.user.cpEditUrl }}">{{ 'Craft user'|t('showtime') }}</a>
+            {% else %}
+                — {{ 'no Craft account'|t('showtime') }}
+            {% endif %}
+        </p>
+
+        {% if not person.isKnown %}
+            <p>{{ 'Nothing on file for that address.'|t('showtime') }}</p>
+        {% endif %}
+
+        {% if canSeeMembership %}
+            <h3>{{ 'Membership'|t('showtime') }}</h3>
+            {% if person.subscriptions %}
+                <table class="data fullwidth">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Plan'|t('showtime') }}</th>
+                            <th>{{ 'Status'|t('showtime') }}</th>
+                            <th>{{ 'Started'|t('showtime') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subscription in person.subscriptions %}
+                            <tr>
+                                <td><a href="{{ subscription.cpEditUrl }}">{{ subscription.plan.name ?? '—' }}</a></td>
+                                <td>{{ subscription.status }}</td>
+                                <td>{{ subscription.startDate ? subscription.startDate|date('medium') : '—' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="light">{{ 'Not a member.'|t('showtime') }}</p>
+            {% endif %}
+        {% endif %}
+
+        {% if canSeeBookings %}
+            <h3>{{ 'Bookings'|t('showtime') }}</h3>
+            {% if person.bookings %}
+                <table class="data fullwidth">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Reference'|t('showtime') }}</th>
+                            <th>{{ 'When'|t('showtime') }}</th>
+                            <th>{{ 'Status'|t('showtime') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in person.bookings %}
+                            <tr>
+                                <td><a href="{{ cpUrl('stub/bookings/' ~ booking.id) }}">{{ booking.referenceNumber }}</a></td>
+                                <td>{{ booking.startDateTime ? booking.startDateTime|date('medium') : '—' }}</td>
+                                <td>{{ booking.bookingStatus }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="light">{{ 'No bookings.'|t('showtime') }}</p>
+            {% endif %}
+        {% endif %}
+
+        {% if canSeeTickets %}
+            <h3>{{ 'Event tickets'|t('showtime') }}</h3>
+            {% if person.registrations %}
+                <table class="data fullwidth">
+                    <thead>
+                        <tr>
+                            <th>{{ 'Event'|t('showtime') }}</th>
+                            <th>{{ 'Ticket'|t('showtime') }}</th>
+                            <th>{{ 'Qty'|t('showtime') }}</th>
+                            <th>{{ 'Order'|t('showtime') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for registration in person.registrations %}
+                            <tr>
+                                <td>
+                                    {% if registration.eventId %}
+                                        <a href="{{ cpUrl('owl/events/' ~ registration.eventId) }}">{{ registration.eventTitle }}</a>
+                                    {% else %}
+                                        {{ registration.eventTitle }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ registration.ticketName }}</td>
+                                <td>{{ registration.qty }}</td>
+                                <td><a href="{{ cpUrl('commerce/orders/' ~ registration.orderId) }}">{{ registration.reference ?: registration.orderNumber|slice(0, 7) }}</a></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="light">{{ 'No ticket orders.'|t('showtime') }}</p>
+            {% endif %}
+        {% endif %}
+
+        <p class="light">
+            {{ 'Records are joined on the email address, so someone using two addresses appears as two people.'|t('showtime') }}
+        </p>
+    {% endif %}
+{% endblock %}

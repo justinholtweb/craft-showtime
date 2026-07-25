@@ -1,0 +1,108 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = isNew ? 'New Provider'|t('stub') : provider.name %}
+{% set selectedSubnavItem = 'providers' %}
+
+{% block content %}
+    <form method="post" accept-charset="UTF-8">
+        {{ csrfInput() }}
+        {{ actionInput('stub/providers/save') }}
+        {{ redirectInput('stub/providers') }}
+
+        {% if provider.id %}
+            {{ hiddenInput('providerId', provider.id) }}
+        {% endif %}
+
+        {% import '_includes/forms' as forms %}
+
+        {{ forms.textField({
+            label: 'Name'|t('stub'),
+            id: 'name',
+            name: 'name',
+            value: provider.name,
+            required: true,
+            errors: provider.getErrors('name'),
+            first: true,
+        }) }}
+
+        {{ forms.textField({
+            label: 'Handle'|t('stub'),
+            id: 'handle',
+            name: 'handle',
+            value: provider.handle,
+            instructions: 'Leave blank to auto-generate from name.'|t('stub'),
+            errors: provider.getErrors('handle'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Email'|t('stub'),
+            id: 'email',
+            name: 'email',
+            value: provider.email,
+            type: 'email',
+            errors: provider.getErrors('email'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Phone'|t('stub'),
+            id: 'phone',
+            name: 'phone',
+            value: provider.phone,
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'Bio'|t('stub'),
+            id: 'bio',
+            name: 'bio',
+            value: provider.bio,
+            rows: 3,
+        }) }}
+
+        {{ forms.timeZoneField({
+            label: 'Timezone'|t('stub'),
+            id: 'timezone',
+            name: 'timezone',
+            value: provider.timezone,
+            required: true,
+            errors: provider.getErrors('timezone'),
+        }) }}
+
+        {{ forms.colorField({
+            label: 'Color'|t('stub'),
+            id: 'color',
+            name: 'color',
+            value: provider.color,
+        }) }}
+
+        <hr>
+        <h2>{{ 'Assigned Services'|t('stub') }}</h2>
+
+        {% if allServices|length %}
+            {{ forms.checkboxGroupField({
+                label: 'Services'|t('stub'),
+                name: 'serviceIds',
+                options: allServices|map(s => { label: s.name, value: s.id }),
+                values: provider.serviceIds,
+            }) }}
+        {% else %}
+            <p>{{ 'No services created yet.'|t('stub') }} <a href="{{ cpUrl('stub/services/new') }}">{{ 'Create a service'|t('stub') }}</a></p>
+        {% endif %}
+
+        <hr>
+
+        {{ forms.lightswitchField({
+            label: 'Enabled'|t('stub'),
+            id: 'enabled',
+            name: 'enabled',
+            on: provider.enabled,
+        }) }}
+
+        <div class="btngroup">
+            <button type="submit" class="btn submit">{{ 'Save'|t('app') }}</button>
+        </div>
+    </form>
+
+    {% js %}
+        new Craft.HandleGenerator('#name', '#handle');
+    {% endjs %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'Drip Schedules'|t('headcount') %}
+{% set selectedSubnavItem = 'drip' %}
+
+{% block actionButton %}
+    <a href="{{ cpUrl('headcount/drip/new') }}" class="btn submit">{{ 'New Drip Schedule'|t('headcount') }}</a>
+{% endblock %}
+
+{% block content %}
+    {% if schedules|length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|t('headcount') }}</th>
+                    <th>{{ 'Type'|t('headcount') }}</th>
+                    <th>{{ 'Delay'|t('headcount') }}</th>
+                    <th>{{ 'Plans'|t('headcount') }}</th>
+                    <th>{{ 'Status'|t('headcount') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for schedule in schedules %}
+                    <tr>
+                        <td><a href="{{ cpUrl('headcount/drip/' ~ schedule.id) }}"><strong>{{ schedule.name }}</strong></a></td>
+                        <td>{{ schedule.type }}</td>
+                        <td>{{ schedule.delayDays }} {{ 'days'|t('headcount') }}</td>
+                        <td>{{ schedule.planIds ? schedule.planIds|length ~ ' plan(s)' : '—' }}</td>
+                        <td>
+                            {% if schedule.enabled %}
+                                <span class="status green"></span> {{ 'Enabled'|t('headcount') }}
+                            {% else %}
+                                <span class="status"></span> {{ 'Disabled'|t('headcount') }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>{{ 'No drip schedules yet. Create schedules to release content over time.'|t('headcount') }}</p>
+    {% endif %}
+{% endblock %}

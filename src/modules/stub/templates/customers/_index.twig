@@ -1,0 +1,43 @@
+{% extends 'stub/_layouts/cp' %}
+
+{% set title = 'Customers'|t('stub') %}
+{% set selectedSubnavItem = 'customers' %}
+
+{% block content %}
+    <div class="toolbar" style="margin-bottom: 16px;">
+        <form method="get" style="display: flex; gap: 8px;">
+            <input type="text" name="q" value="{{ search }}" placeholder="{{ 'Search customers...'|t('stub') }}" class="text">
+            <button type="submit" class="btn">{{ 'Search'|t('stub') }}</button>
+            {% if search %}
+                <a href="{{ cpUrl('stub/customers') }}" class="btn">{{ 'Clear'|t('stub') }}</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if customers|length %}
+        <div class="tableview">
+            <table class="data fullwidth">
+                <thead>
+                    <tr>
+                        <th>{{ 'Name'|t('stub') }}</th>
+                        <th>{{ 'Email'|t('stub') }}</th>
+                        <th>{{ 'Phone'|t('stub') }}</th>
+                        <th>{{ 'Created'|t('stub') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                        <tr>
+                            <td><a href="{{ cpUrl('stub/customers/' ~ customer.id) }}">{{ customer.firstName }} {{ customer.lastName }}</a></td>
+                            <td><a href="mailto:{{ customer.email }}">{{ customer.email }}</a></td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.dateCreated|date('M j, Y') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="light">{{ search ? 'No customers found.'|t('stub') : 'No customers yet.'|t('stub') }}</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = title %}
+{% set selectedSubnavItem = 'plans' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="headcount/plans/save">
+    {% if not isNew %}
+        <input type="hidden" name="planId" value="{{ plan.id }}">
+    {% endif %}
+    {{ csrfInput() }}
+    {{ redirectInput('headcount/plans/{id}') }}
+
+    {{ forms.textField({
+        first: true,
+        label: 'Name'|t('headcount'),
+        instructions: 'The display name for this plan.'|t('headcount'),
+        name: 'name',
+        value: plan.name,
+        required: true,
+        errors: plan.getErrors('name'),
+    }) }}
+
+    {{ forms.textField({
+        label: 'Handle'|t('headcount'),
+        instructions: 'Unique handle used in templates and API.'|t('headcount'),
+        name: 'handle',
+        value: plan.handle,
+        required: true,
+        errors: plan.getErrors('handle'),
+    }) }}
+
+    {{ forms.textareaField({
+        label: 'Description'|t('headcount'),
+        name: 'description',
+        value: plan.description,
+        rows: 3,
+    }) }}
+
+    {{ forms.selectField({
+        label: 'User Group'|t('headcount'),
+        instructions: 'The Craft user group to assign members to.'|t('headcount'),
+        name: 'userGroupId',
+        value: plan.userGroupId,
+        options: [{ label: '— Select —', value: '' }]|merge(userGroups|map((name, id) => { label: name, value: id })),
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Pricing'|t('headcount') }}</h2>
+
+    {{ forms.textField({
+        label: 'Price'|t('headcount'),
+        name: 'price',
+        value: plan.price,
+        type: 'number',
+        step: '0.01',
+        min: '0',
+        required: true,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Currency'|t('headcount'),
+        name: 'currency',
+        value: plan.currency,
+        size: 3,
+        maxlength: 3,
+        required: true,
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Billing Interval'|t('headcount'),
+        name: 'billingInterval',
+        value: plan.billingInterval,
+        options: [
+            { label: 'Day', value: 'day' },
+            { label: 'Week', value: 'week' },
+            { label: 'Month', value: 'month' },
+            { label: 'Year', value: 'year' },
+        ],
+    }) }}
+
+    {{ forms.textField({
+        label: 'Billing Interval Count'|t('headcount'),
+        instructions: 'e.g., 1 for monthly, 3 for quarterly.'|t('headcount'),
+        name: 'billingIntervalCount',
+        value: plan.billingIntervalCount,
+        type: 'number',
+        min: 1,
+    }) }}
+
+    {{ forms.textField({
+        label: 'Trial Days'|t('headcount'),
+        instructions: 'Number of free trial days. 0 for no trial.'|t('headcount'),
+        name: 'trialDays',
+        value: plan.trialDays,
+        type: 'number',
+        min: 0,
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Gateway IDs'|t('headcount') }}</h2>
+
+    {{ forms.textField({
+        label: 'Stripe Price ID'|t('headcount'),
+        instructions: 'Leave blank to auto-create on first sync.'|t('headcount'),
+        name: 'stripePriceId',
+        value: plan.stripePriceId,
+    }) }}
+
+    {{ forms.textField({
+        label: 'PayPal Plan ID'|t('headcount'),
+        instructions: 'Leave blank to auto-create on first sync.'|t('headcount'),
+        name: 'paypalPlanId',
+        value: plan.paypalPlanId,
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Features'|t('headcount') }}</h2>
+
+    {{ forms.textareaField({
+        label: 'Feature List'|t('headcount'),
+        instructions: 'One feature per line. Displayed on pricing pages.'|t('headcount'),
+        name: 'features',
+        value: plan.features ? plan.features|join("\n") : '',
+        rows: 5,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Enabled'|t('headcount'),
+        name: 'enabled',
+        on: plan.enabled,
+    }) }}
+{% endblock %}

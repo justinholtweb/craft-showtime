@@ -1,0 +1,257 @@
+{% import '_includes/forms' as forms %}
+
+<h2>{{ 'General'|t('stub') }}</h2>
+
+{{ forms.textField({
+    label: 'Plugin Name'|t('stub'),
+    instructions: 'The name to display in the CP sidebar.'|t('stub'),
+    id: 'pluginName',
+    name: 'pluginName',
+    value: settings.pluginName,
+    errors: settings.getErrors('pluginName'),
+}) }}
+
+{{ forms.selectField({
+    label: 'Default Currency'|t('stub'),
+    id: 'defaultCurrency',
+    name: 'defaultCurrency',
+    value: settings.defaultCurrency,
+    options: [
+        { label: 'USD', value: 'USD' },
+        { label: 'EUR', value: 'EUR' },
+        { label: 'GBP', value: 'GBP' },
+        { label: 'CAD', value: 'CAD' },
+        { label: 'AUD', value: 'AUD' },
+    ],
+    errors: settings.getErrors('defaultCurrency'),
+}) }}
+
+{{ forms.selectField({
+    label: 'Default Timezone'|t('stub'),
+    id: 'defaultTimezone',
+    name: 'defaultTimezone',
+    value: settings.defaultTimezone,
+    options: craft.app.i18n.allLocales|map(l => { label: l.displayName, value: l.id })|merge(
+        craft.app.timeZone ? [{ label: craft.app.timeZone, value: craft.app.timeZone }] : []
+    ),
+    errors: settings.getErrors('defaultTimezone'),
+}) }}
+
+{{ forms.textField({
+    label: 'Minimum Notice (minutes)'|t('stub'),
+    instructions: 'How far in advance a booking must be made.'|t('stub'),
+    id: 'minimumNotice',
+    name: 'minimumNotice',
+    value: settings.minimumNotice,
+    type: 'number',
+    min: 0,
+    errors: settings.getErrors('minimumNotice'),
+}) }}
+
+{{ forms.textField({
+    label: 'Max Advance Booking (days)'|t('stub'),
+    instructions: 'How far in the future bookings can be made.'|t('stub'),
+    id: 'maxAdvanceBooking',
+    name: 'maxAdvanceBooking',
+    value: settings.maxAdvanceBooking,
+    type: 'number',
+    min: 1,
+    errors: settings.getErrors('maxAdvanceBooking'),
+}) }}
+
+{{ forms.textField({
+    label: 'Slot Interval (minutes)'|t('stub'),
+    instructions: 'Time between available slot start times.'|t('stub'),
+    id: 'slotInterval',
+    name: 'slotInterval',
+    value: settings.slotInterval,
+    type: 'number',
+    min: 5,
+    errors: settings.getErrors('slotInterval'),
+}) }}
+
+<hr>
+<h2>{{ 'Booking Options'|t('stub') }}</h2>
+
+{{ forms.lightswitchField({
+    label: 'Auto-Confirm Free Bookings'|t('stub'),
+    id: 'autoConfirmFreeBookings',
+    name: 'autoConfirmFreeBookings',
+    on: settings.autoConfirmFreeBookings,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Require Phone Number'|t('stub'),
+    id: 'requirePhone',
+    name: 'requirePhone',
+    on: settings.requirePhone,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Allow Customer Notes'|t('stub'),
+    id: 'allowCustomerNotes',
+    name: 'allowCustomerNotes',
+    on: settings.allowCustomerNotes,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Link Customers to Users'|t('stub'),
+    instructions: 'Attach a customer record to the Craft user with the same email address, so a member who books as a guest is still recognised. Turn off if a shared address shouldn’t imply one person.'|t('stub'),
+    id: 'linkCustomersToUsers',
+    name: 'linkCustomersToUsers',
+    on: settings.linkCustomersToUsers,
+}) }}
+
+{{ forms.textField({
+    label: 'Reference Prefix'|t('stub'),
+    instructions: 'Prefix for booking reference numbers (e.g. STB).'|t('stub'),
+    id: 'referencePrefix',
+    name: 'referencePrefix',
+    value: settings.referencePrefix,
+}) }}
+
+{{ forms.textField({
+    label: 'Booking Page URL'|t('stub'),
+    instructions: 'The URL where the booking form is embedded (for email links).'|t('stub'),
+    id: 'bookingPageUrl',
+    name: 'bookingPageUrl',
+    value: settings.bookingPageUrl,
+}) }}
+
+{{ forms.textField({
+    label: 'Terms & Conditions URL'|t('stub'),
+    id: 'termsUrl',
+    name: 'termsUrl',
+    value: settings.termsUrl,
+}) }}
+
+<hr>
+<h2>{{ 'Stripe Payments'|t('stub') }}</h2>
+
+{{ forms.lightswitchField({
+    label: 'Enable Payments'|t('stub'),
+    id: 'paymentEnabled',
+    name: 'paymentEnabled',
+    on: settings.paymentEnabled,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Publishable Key'|t('stub'),
+    instructions: 'Supports $ENV_VAR syntax.'|t('stub'),
+    id: 'stripePublishableKey',
+    name: 'stripePublishableKey',
+    value: settings.stripePublishableKey,
+    suggestEnvVars: true,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Secret Key'|t('stub'),
+    instructions: 'Supports $ENV_VAR syntax.'|t('stub'),
+    id: 'stripeSecretKey',
+    name: 'stripeSecretKey',
+    value: settings.stripeSecretKey,
+    suggestEnvVars: true,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Webhook Secret'|t('stub'),
+    instructions: 'Supports $ENV_VAR syntax.'|t('stub'),
+    id: 'stripeWebhookSecret',
+    name: 'stripeWebhookSecret',
+    value: settings.stripeWebhookSecret,
+    suggestEnvVars: true,
+}) }}
+
+<hr>
+<h2>{{ 'Notifications'|t('stub') }}</h2>
+
+{{ forms.textField({
+    label: 'Admin Email'|t('stub'),
+    instructions: 'Email address for admin booking notifications.'|t('stub'),
+    id: 'adminEmail',
+    name: 'adminEmail',
+    value: settings.adminEmail,
+    type: 'email',
+    errors: settings.getErrors('adminEmail'),
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Send Customer Confirmation'|t('stub'),
+    id: 'sendCustomerConfirmation',
+    name: 'sendCustomerConfirmation',
+    on: settings.sendCustomerConfirmation,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Send Admin Notification'|t('stub'),
+    id: 'sendAdminNotification',
+    name: 'sendAdminNotification',
+    on: settings.sendAdminNotification,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Send Cancellation Email'|t('stub'),
+    id: 'sendCancellationEmail',
+    name: 'sendCancellationEmail',
+    on: settings.sendCancellationEmail,
+}) }}
+
+<hr>
+<h2>{{ 'Appearance'|t('stub') }}</h2>
+
+{{ forms.colorField({
+    label: 'Primary Color'|t('stub'),
+    id: 'primaryColor',
+    name: 'primaryColor',
+    value: settings.primaryColor,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Embed Stripe.js'|t('stub'),
+    instructions: 'Automatically load Stripe.js on booking form pages.'|t('stub'),
+    id: 'embedStripeJs',
+    name: 'embedStripeJs',
+    on: settings.embedStripeJs,
+}) }}
+
+<hr>
+<h2>{{ 'Anti-Abuse'|t('stub') }}</h2>
+
+{{ forms.lightswitchField({
+    label: 'Enable Honeypot'|t('stub'),
+    instructions: 'Add a hidden field to the booking form. Submissions that fill it are silently dropped.'|t('stub'),
+    id: 'enableHoneypot',
+    name: 'enableHoneypot',
+    on: settings.enableHoneypot,
+}) }}
+
+{{ forms.textField({
+    label: 'Honeypot Field Name'|t('stub'),
+    instructions: 'The name attribute used for the honeypot input.'|t('stub'),
+    id: 'honeypotFieldName',
+    name: 'honeypotFieldName',
+    value: settings.honeypotFieldName,
+    errors: settings.getErrors('honeypotFieldName'),
+}) }}
+
+{{ forms.textField({
+    label: 'Bookings per IP per Hour'|t('stub'),
+    instructions: 'Maximum booking submissions allowed from a single IP per hour. Set to 0 to disable.'|t('stub'),
+    id: 'bookingsPerHour',
+    name: 'bookingsPerHour',
+    value: settings.bookingsPerHour,
+    type: 'number',
+    min: 0,
+    errors: settings.getErrors('bookingsPerHour'),
+}) }}
+
+{{ forms.textField({
+    label: 'Payment Intents per IP per Hour'|t('stub'),
+    instructions: 'Maximum create-intent calls allowed from a single IP per hour. Set to 0 to disable.'|t('stub'),
+    id: 'paymentIntentsPerHour',
+    name: 'paymentIntentsPerHour',
+    value: settings.paymentIntentsPerHour,
+    type: 'number',
+    min: 0,
+    errors: settings.getErrors('paymentIntentsPerHour'),
+}) }}

@@ -1,0 +1,54 @@
+{% do view.registerAssetBundle('justinholtweb\\stub\\assetbundles\\booking\\BookingFormAssetBundle') %}
+
+{% set csrfName = craft.app.config.general.csrfTokenName ?? 'CRAFT_CSRF_TOKEN' %}
+{% set csrfToken = craft.app.request.csrfToken %}
+
+<div class="stub-booking-form"
+     data-csrf="{{ csrfToken }}"
+     data-stripe-key="{{ settings.stripePublishableKey }}"
+     data-require-phone="{{ settings.requirePhone ? '1' : '0' }}">
+
+    {# Progress bar #}
+    <div class="stub-progress">
+        <div class="stub-progress-step active"></div>
+        <div class="stub-progress-step"></div>
+        <div class="stub-progress-step"></div>
+        <div class="stub-progress-step"></div>
+        <div class="stub-progress-step"></div>
+        <div class="stub-progress-step"></div>
+    </div>
+
+    {# Step 1: Select Service #}
+    <div class="stub-step active" data-step="0">
+        {% include 'stub/frontend/_steps/_service' %}
+    </div>
+
+    {# Step 2: Select Provider #}
+    <div class="stub-step" data-step="1">
+        {% include 'stub/frontend/_steps/_provider' %}
+    </div>
+
+    {# Step 3: Date & Time #}
+    <div class="stub-step" data-step="2">
+        {% include 'stub/frontend/_steps/_datetime' %}
+    </div>
+
+    {# Step 4: Customer Info #}
+    <div class="stub-step" data-step="3">
+        {% include 'stub/frontend/_steps/_info' %}
+    </div>
+
+    {# Step 5: Payment #}
+    <div class="stub-step" data-step="4">
+        {% include 'stub/frontend/_steps/_payment' %}
+    </div>
+
+    {# Step 6: Confirmation #}
+    <div class="stub-step" data-step="5">
+        {% include 'stub/frontend/_steps/_confirm' %}
+    </div>
+</div>
+
+{% if settings.paymentEnabled and settings.embedStripeJs and settings.stripePublishableKey %}
+    {% js 'https://js.stripe.com/v3/' %}
+{% endif %}

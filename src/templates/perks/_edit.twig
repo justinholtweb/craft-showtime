@@ -1,0 +1,102 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = perk.id ? 'Edit perk'|t('showtime') : 'New perk'|t('showtime') %}
+{% set selectedSubnavItem = 'perks' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="showtime/perks/save">
+    <input type="hidden" name="redirect" value="{{ 'showtime/perks'|hash }}">
+    {% if perk.id %}<input type="hidden" name="perkId" value="{{ perk.id }}">{% endif %}
+
+    {{ forms.selectField({
+        label: 'Plan'|t('showtime'),
+        instructions: 'The membership that earns this perk.'|t('showtime'),
+        name: 'planId',
+        value: perk.planId,
+        options: plans|length
+            ? plans|keys|map(id => { label: plans[id], value: id })
+            : [{ label: 'No plans yet'|t('showtime'), value: '' }],
+        errors: perk.getErrors('planId'),
+    }) }}
+
+    {{ forms.selectField({
+        label: 'Applies to'|t('showtime'),
+        instructions: 'Bookable services are priced by Stub; event tickets are priced through Commerce.'|t('showtime'),
+        name: 'targetType',
+        value: perk.targetType,
+        options: targetTypes,
+        toggle: true,
+        targetPrefix: 'target-',
+    }) }}
+
+    <div id="target-stub:service" {{ perk.targetType != 'stub:service' ? 'class="hidden"' : '' }}>
+        {{ forms.selectField({
+            label: 'Service'|t('showtime'),
+            name: 'targetIds[stub:service]',
+            value: perk.targetType == 'stub:service' ? perk.targetId : null,
+            options: services|length
+                ? services
+                : [{ label: 'No services yet'|t('showtime'), value: '' }],
+            errors: perk.getErrors('targetId'),
+        }) }}
+    </div>
+
+    <div id="target-owl:ticket" {{ perk.targetType != 'owl:ticket' ? 'class="hidden"' : '' }}>
+        {{ forms.selectField({
+            label: 'Ticket'|t('showtime'),
+            name: 'targetIds[owl:ticket]',
+            value: perk.targetType == 'owl:ticket' ? perk.targetId : null,
+            options: tickets|length
+                ? tickets
+                : [{ label: 'No tickets yet — tickets need Craft Commerce'|t('showtime'), value: '' }],
+            errors: perk.getErrors('targetId'),
+        }) }}
+    </div>
+
+    {{ forms.lightswitchField({
+        label: 'Members only'|t('showtime'),
+        instructions: 'Non-members can’t book or buy this at all. Enforced when the booking is created or the ticket is added to the cart, not just hidden.'|t('showtime'),
+        name: 'membersOnly',
+        on: perk.membersOnly,
+    }) }}
+
+    <hr>
+
+    <p class="light">
+        {{ 'Leave both blank for access only. If both are set, the percentage is applied first.'|t('showtime') }}
+    </p>
+
+    {{ forms.textField({
+        label: 'Discount %'|t('showtime'),
+        name: 'discountPercent',
+        value: perk.discountPercent,
+        size: 5,
+        errors: perk.getErrors('discountPercent'),
+    }) }}
+
+    {{ forms.textField({
+        label: 'Discount amount'|t('showtime'),
+        name: 'discountAmount',
+        value: perk.discountAmount,
+        size: 10,
+        errors: perk.getErrors('discountAmount'),
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'Enabled'|t('showtime'),
+        name: 'enabled',
+        on: perk.enabled,
+    }) }}
+
+    {% if perk.id %}
+        <hr>
+        <form method="post" accept-charset="UTF-8">
+            {{ csrfInput() }}
+            <input type="hidden" name="action" value="showtime/perks/delete">
+            <input type="hidden" name="perkId" value="{{ perk.id }}">
+            <button type="submit" class="btn delete">{{ 'Delete'|t('showtime') }}</button>
+        </form>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,92 @@
+{% import '_includes/forms' as forms %}
+
+{# Craft wraps everything this renders in namespaceInputs(…, 'settings'), so a field named
+   `stripeSecretKey` posts as settings[stripeSecretKey]. The shared values are flat scalars
+   on purpose — see Settings for why nesting them was a trap. #}
+
+<h2>{{ 'Shared'|t('showtime') }}</h2>
+
+<p class="light">
+    {{ 'Entered once here and used by every bundled plugin. A plugin-specific value below overrides it.'|t('showtime') }}
+</p>
+
+{{ forms.autosuggestField({
+    label: 'Stripe Secret Key'|t('showtime'),
+    instructions: 'Used by both bookings and memberships.'|t('showtime'),
+    id: 'stripeSecretKey',
+    name: 'stripeSecretKey',
+    value: settings.stripeSecretKey,
+    suggestEnvVars: true,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Publishable Key'|t('showtime'),
+    id: 'stripePublishableKey',
+    name: 'stripePublishableKey',
+    value: settings.stripePublishableKey,
+    suggestEnvVars: true,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Stripe Webhook Secret'|t('showtime'),
+    id: 'stripeWebhookSecret',
+    name: 'stripeWebhookSecret',
+    value: settings.stripeWebhookSecret,
+    suggestEnvVars: true,
+}) }}
+
+{{ forms.textField({
+    label: 'From Name'|t('showtime'),
+    instructions: 'Used on booking and membership emails.'|t('showtime'),
+    id: 'emailFromName',
+    name: 'emailFromName',
+    value: settings.emailFromName,
+}) }}
+
+{{ forms.textField({
+    label: 'From Email'|t('showtime'),
+    id: 'emailFromEmail',
+    name: 'emailFromEmail',
+    value: settings.emailFromEmail,
+}) }}
+
+{{ forms.textField({
+    label: 'Default Currency'|t('showtime'),
+    id: 'defaultCurrency',
+    name: 'defaultCurrency',
+    value: settings.defaultCurrency,
+    size: 3,
+    errors: settings.getErrors('defaultCurrency'),
+}) }}
+
+<hr>
+
+<h2>{{ 'Bookings'|t('showtime') }}</h2>
+
+{% if stubSettings %}
+    {% namespace 'stub' %}
+        {% include 'stub/settings' with {
+            settings: stubSettings,
+            plugin: stubPlugin,
+        } only %}
+    {% endnamespace %}
+{% else %}
+    <p class="error">{{ 'The bookings module is not mounted.'|t('showtime') }}</p>
+{% endif %}
+
+{% if hasHeadcount %}
+    <hr>
+
+    <h2>{{ 'Memberships'|t('showtime') }}</h2>
+
+    <p>
+        {{ 'Membership settings — payment gateways, emails, and the REST API key — have their own screens:'|t('showtime') }}
+    </p>
+
+    <ul>
+        <li><a class="go" href="{{ cpUrl('headcount/settings') }}">{{ 'General'|t('showtime') }}</a></li>
+        <li><a class="go" href="{{ cpUrl('headcount/settings/stripe') }}">{{ 'Stripe'|t('showtime') }}</a></li>
+        <li><a class="go" href="{{ cpUrl('headcount/settings/paypal') }}">{{ 'PayPal'|t('showtime') }}</a></li>
+        <li><a class="go" href="{{ cpUrl('headcount/settings/emails') }}">{{ 'Emails'|t('showtime') }}</a></li>
+    </ul>
+{% endif %}

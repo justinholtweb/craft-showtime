@@ -1,0 +1,29 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Provider calendars'|t('showtime') %}
+{% set selectedSubnavItem = 'provider-calendars' %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="showtime/provider-calendars/save">
+
+    <p class="light">
+        {{ 'Events on a calendar a provider runs block their appointment slots, so nobody gets booked for a 1:1 while they’re teaching.'|t('showtime') }}
+    </p>
+
+    {% if providers|length and calendars|length %}
+        {% for provider in providers %}
+            {{ forms.checkboxGroupField({
+                label: provider.name,
+                name: 'calendars[' ~ provider.id ~ ']',
+                options: calendars|map(c => { label: c.name, value: c.id }),
+                values: links[provider.id] ?? [],
+            }) }}
+        {% endfor %}
+    {% elseif not providers|length %}
+        <p>{{ 'No booking providers yet.'|t('showtime') }}</p>
+    {% else %}
+        <p>{{ 'No event calendars yet.'|t('showtime') }}</p>
+    {% endif %}
+{% endblock %}
