@@ -31,7 +31,7 @@
                             </td>
                             <td><code>{{ service.handle }}</code></td>
                             <td>{{ service.duration }} min</td>
-                            <td>{{ service.price > 0 ? (service.price|number_format(2) ~ ' ' ~ service.currency) : 'Free'|t('stub') }}</td>
+                            <td>{{ service.price > 0 ? craft.stub.formatPrice(service.price, service.currency) : 'Free'|t('stub') }}</td>
                             <td>{{ service.capacity }}</td>
                             <td>
                                 <span class="status {{ service.enabled ? 'enabled' : 'disabled' }}"></span>

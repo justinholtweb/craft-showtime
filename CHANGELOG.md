@@ -1,5 +1,24 @@
 # Release Notes for Showtime
 
+## Unreleased
+
+### Added
+
+- Picks up Stub's currency work: 25 common currencies instead of 5 (CHF among them), and
+  any currency configured in Craft Commerce when it's installed. The shared **Default
+  Currency** field is now a picker drawn from the same list Stub's own screen uses, so the
+  two can't drift apart. Its empty "use each module's own default" option is unchanged.
+- Showtime's shared currency is now validated as an ISO 4217 code. It's pushed into Stub
+  and Headcount, both of which validate it, so a typo is caught on the screen it was typed
+  into rather than being rejected later by a module with no visible field to blame.
+
+### Fixed
+
+- The composite settings screen would have rendered an empty currency dropdown for
+  bookings. Stub's settings fragment is included with `only`, and it now needs a
+  `currencyOptions` variable that Showtime wasn't passing — Stub's own `settingsHtml()`,
+  which normally supplies it, never fires for a mounted module.
+
 ## 5.0.0 - 2026-07-26
 
 First release. Showtime is the Owl, Stub and Headcount plugins combined into one plugin

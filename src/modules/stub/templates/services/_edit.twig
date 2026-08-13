@@ -72,13 +72,8 @@
             id: 'currency',
             name: 'currency',
             value: service.currency,
-            options: [
-                { label: 'USD', value: 'USD' },
-                { label: 'EUR', value: 'EUR' },
-                { label: 'GBP', value: 'GBP' },
-                { label: 'CAD', value: 'CAD' },
-                { label: 'AUD', value: 'AUD' },
-            ],
+            options: currencyOptions,
+            errors: service.getErrors('currency'),
         }) }}
 
         <hr>

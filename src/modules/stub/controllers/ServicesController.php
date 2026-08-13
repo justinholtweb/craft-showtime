@@ -51,6 +51,9 @@ class ServicesController extends Controller
             'isNew' => $isNew,
             'title' => $isNew ? Craft::t('stub', 'New Service') : $service->name,
             'selectedSubnavItem' => 'services',
+            // Pass the saved code through so a service priced in a currency that's since
+            // been dropped from Commerce still shows its own value in the picker.
+            'currencyOptions' => Plugin::getInstance()->currencies->getCurrencyOptions($service->currency),
         ]);
     }
 

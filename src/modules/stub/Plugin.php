@@ -16,6 +16,7 @@ use justinholtweb\stub\elements\Booking;
 use justinholtweb\stub\models\Settings;
 use justinholtweb\stub\services\Availability;
 use justinholtweb\stub\services\Bookings;
+use justinholtweb\stub\services\Currencies;
 use justinholtweb\stub\services\Customers;
 use justinholtweb\stub\services\Emails;
 use justinholtweb\stub\services\Payments;
@@ -33,6 +34,7 @@ use yii\base\Exception;
  * @property Bookings $bookings
  * @property Availability $availability
  * @property Customers $customers
+ * @property Currencies $currencies
  * @property Payments $payments
  * @property Emails $emails
  * @property Settings $settings
@@ -75,6 +77,7 @@ class Plugin extends BasePlugin
                 'bookings' => Bookings::class,
                 'availability' => Availability::class,
                 'customers' => Customers::class,
+                'currencies' => Currencies::class,
                 'payments' => Payments::class,
                 'emails' => Emails::class,
             ],
@@ -164,6 +167,7 @@ class Plugin extends BasePlugin
         return Craft::$app->getView()->renderTemplate('stub/settings', [
             'settings' => $this->getSettings(),
             'plugin' => $this,
+            'currencyOptions' => $this->currencies->getCurrencyOptions($this->getSettings()->defaultCurrency),
         ]);
     }
 

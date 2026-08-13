@@ -6,6 +6,7 @@ use Craft;
 use justinholtweb\stub\elements\Booking;
 use justinholtweb\stub\elements\db\BookingQuery;
 use justinholtweb\stub\Plugin;
+use justinholtweb\stub\services\Currencies;
 use Twig\Markup;
 
 class StubVariable
@@ -50,5 +51,29 @@ class StubVariable
     public function settings(): object
     {
         return Plugin::getInstance()->getSettings();
+    }
+
+    /**
+     * Format a price with its currency's symbol, decimal count and symbol placement.
+     *
+     * Exposed so templates don't have to reach for `|number_format(2)`, which quietly
+     * assumes every currency has two decimals and puts the code after the amount.
+     */
+    public function formatPrice(float $price, ?string $currency = null): string
+    {
+        $currency ??= Plugin::getInstance()->getSettings()->defaultCurrency;
+
+        return Currencies::format($price, $currency);
+    }
+
+    /**
+     * Currencies this site can price in, as `code => label`. Includes anything
+     * configured in Craft Commerce when it's installed.
+     *
+     * @return array<string, string>
+     */
+    public function currencies(): array
+    {
+        return Plugin::getInstance()->currencies->getAvailableCurrencies();
     }
 }

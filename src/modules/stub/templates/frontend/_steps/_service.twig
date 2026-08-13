@@ -11,7 +11,7 @@
             <div class="stub-service-name">{{ service.name }}</div>
             <div class="stub-service-meta">
                 <span>{{ service.duration }} min</span>
-                <span>{{ service.price > 0 ? service.price|number_format(2) ~ ' ' ~ service.currency : 'Free'|t('stub') }}</span>
+                <span>{{ service.price > 0 ? craft.stub.formatPrice(service.price, service.currency) : 'Free'|t('stub') }}</span>
             </div>
             {% if service.description %}
                 <div class="stub-service-desc">{{ service.description }}</div>

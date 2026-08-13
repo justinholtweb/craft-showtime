@@ -29,7 +29,10 @@ class Payments extends Component
     {
         $this->_initStripe();
 
-        $amount = (int)round($booking->price * 100); // Convert to cents
+        // Not simply price * 100: Stripe wants the currency's smallest unit, and for
+        // zero-decimal currencies (JPY, KRW, …) that unit *is* the whole unit — sending
+        // cents there would charge 100× the price.
+        $amount = Currencies::toMinorUnits($booking->price, $booking->currency);
         if ($amount <= 0) {
             return null;
         }

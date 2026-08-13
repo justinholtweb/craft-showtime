@@ -61,6 +61,10 @@ class Settings extends Model
             [['pluginName', 'defaultCurrency', 'defaultTimezone'], 'required'],
             [['pluginName'], 'string', 'max' => 50],
             [['defaultCurrency'], 'string', 'length' => 3],
+            // ISO 4217 alphabetic codes are uppercase; the shape check is deliberately
+            // looser than a list membership check, since Commerce can supply codes the
+            // built-in picker list doesn't carry.
+            [['defaultCurrency'], 'match', 'pattern' => '/^[A-Z]{3}$/'],
             [['minimumNotice', 'maxAdvanceBooking', 'slotInterval'], 'integer', 'min' => 1],
             [['adminEmail'], 'email', 'skipOnEmpty' => true],
             // Craft's color input posts the hex without a leading `#`, so normalize

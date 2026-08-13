@@ -220,13 +220,21 @@ class Plugin extends BasePlugin
      */
     protected function settingsHtml(): ?string
     {
+        /** @var \justinholtweb\stub\Plugin|null $stub */
         $stub = $this->getModuleByHandle('stub');
+
+        // Stub's settings fragment renders the currency picker from this list, and its own
+        // settingsHtml() — the usual supplier — never fires for a mounted module. Stub owns
+        // the list because it's the module that knows about Commerce; the shared field above
+        // the fragment uses the same one so both pickers can't drift apart.
+        $currencyOptions = $stub?->currencies->getCurrencyOptions($this->getSettings()->defaultCurrency) ?? [];
 
         return Craft::$app->getView()->renderTemplate('showtime/settings/_index', [
             'plugin' => $this,
             'settings' => $this->getSettings(),
             'stubSettings' => $stub?->getSettings(),
             'stubPlugin' => $stub,
+            'currencyOptions' => $currencyOptions,
             'hasHeadcount' => $this->getModuleByHandle('headcount') !== null,
         ]);
     }

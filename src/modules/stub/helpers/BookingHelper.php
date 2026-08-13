@@ -5,6 +5,7 @@ namespace justinholtweb\stub\helpers;
 use Craft;
 use justinholtweb\stub\elements\Booking;
 use justinholtweb\stub\Plugin;
+use justinholtweb\stub\services\Currencies;
 
 class BookingHelper
 {
@@ -59,18 +60,17 @@ class BookingHelper
         return Craft::$app->getConfig()->getGeneral()->securityKey . ':stub:payment';
     }
 
+    /**
+     * Format a price for display.
+     *
+     * Kept as the plugin-wide entry point for price display, but the currency knowledge
+     * lives in the Currencies service — a hand-maintained symbol map could only ever
+     * cover the codes someone had gotten around to adding, and got the decimal count and
+     * symbol placement wrong for everything else.
+     */
     public static function formatPrice(float $price, string $currency): string
     {
-        $symbols = [
-            'USD' => '$',
-            'EUR' => '€',
-            'GBP' => '£',
-            'CAD' => 'CA$',
-            'AUD' => 'A$',
-        ];
-
-        $symbol = $symbols[$currency] ?? $currency . ' ';
-        return $symbol . number_format($price, 2);
+        return Currencies::format($price, $currency);
     }
 
     public static function formatDuration(int $minutes): string

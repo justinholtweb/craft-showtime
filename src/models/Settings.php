@@ -43,6 +43,20 @@ class Settings extends Model
     public array $headcount = [];
 
     /**
+     * The shared currency is pushed into Stub and Headcount, both of which validate it as
+     * an ISO 4217 code — so catch a bad one here, on the screen it was typed into, rather
+     * than letting a module reject it later with no visible field to blame.
+     *
+     * Empty is valid and means "don't override": each module keeps its own default.
+     */
+    public function defineRules(): array
+    {
+        return [
+            [['defaultCurrency'], 'match', 'pattern' => '/^[A-Z]{3}$/', 'skipOnEmpty' => true],
+        ];
+    }
+
+    /**
      * The settings array handed to a module at mount time.
      *
      * Resolution order (last wins):

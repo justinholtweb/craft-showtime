@@ -46,6 +46,10 @@ class Service extends Model
             [['duration', 'capacity'], 'integer', 'min' => 1],
             [['price'], 'number', 'min' => 0],
             [['currency'], 'string', 'length' => 3],
+            // ISO 4217 alphabetic codes are uppercase; the shape check is deliberately
+            // looser than a list membership check, since Commerce can supply codes the
+            // built-in picker list doesn't carry.
+            [['currency'], 'match', 'pattern' => '/^[A-Z]{3}$/'],
             // Craft's color input posts the hex without a leading `#`, so normalize
             // before matching. The pattern excludes `transparent` (too long for the
             // `char(7)` column) that ColorValidator would otherwise allow.

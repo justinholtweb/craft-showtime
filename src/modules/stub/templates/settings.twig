@@ -13,16 +13,11 @@
 
 {{ forms.selectField({
     label: 'Default Currency'|t('stub'),
+    instructions: 'Used for new services. Individual services can override it.'|t('stub'),
     id: 'defaultCurrency',
     name: 'defaultCurrency',
     value: settings.defaultCurrency,
-    options: [
-        { label: 'USD', value: 'USD' },
-        { label: 'EUR', value: 'EUR' },
-        { label: 'GBP', value: 'GBP' },
-        { label: 'CAD', value: 'CAD' },
-        { label: 'AUD', value: 'AUD' },
-    ],
+    options: currencyOptions,
     errors: settings.getErrors('defaultCurrency'),
 }) }}
 

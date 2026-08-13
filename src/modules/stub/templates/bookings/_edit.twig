@@ -36,7 +36,7 @@
                         </tr>
                         <tr>
                             <th>{{ 'Price'|t('stub') }}</th>
-                            <td>{{ booking.price|number_format(2) }} {{ booking.currency }}</td>
+                            <td>{{ craft.stub.formatPrice(booking.price, booking.currency) }}</td>
                         </tr>
                         <tr>
                             <th>{{ 'Payment Status'|t('stub') }}</th>

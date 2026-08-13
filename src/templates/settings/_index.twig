@@ -50,12 +50,13 @@
     value: settings.emailFromEmail,
 }) }}
 
-{{ forms.textField({
+{{ forms.selectField({
     label: 'Default Currency'|t('showtime'),
+    instructions: 'Shared by bookings and memberships. Individual services can override it.'|t('showtime'),
     id: 'defaultCurrency',
     name: 'defaultCurrency',
     value: settings.defaultCurrency,
-    size: 3,
+    options: [{ label: 'Use each module’s own default'|t('showtime'), value: '' }]|merge(currencyOptions),
     errors: settings.getErrors('defaultCurrency'),
 }) }}
 
@@ -68,6 +69,7 @@
         {% include 'stub/settings' with {
             settings: stubSettings,
             plugin: stubPlugin,
+            currencyOptions: currencyOptions,
         } only %}
     {% endnamespace %}
 {% else %}

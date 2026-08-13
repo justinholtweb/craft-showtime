@@ -20,7 +20,7 @@
             <div class="stub-stat-label">{{ 'Pending'|t('stub') }}</div>
         </div>
         <div class="stub-stat-card">
-            <div class="stub-stat-value">{{ stats.monthlyRevenue|number_format(2) }} {{ settings.defaultCurrency }}</div>
+            <div class="stub-stat-value">{{ craft.stub.formatPrice(stats.monthlyRevenue, settings.defaultCurrency) }}</div>
             <div class="stub-stat-label">{{ 'Monthly Revenue'|t('stub') }}</div>
         </div>
     </div>
