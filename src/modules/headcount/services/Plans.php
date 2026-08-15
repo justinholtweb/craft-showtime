@@ -4,6 +4,8 @@ namespace justinholtweb\headcount\services;
 
 use Craft;
 use craft\db\Query;
+use craft\helpers\DateTimeHelper;
+use craft\helpers\Db;
 use justinholtweb\headcount\helpers\Json;
 use justinholtweb\headcount\models\Plan;
 use justinholtweb\headcount\records\PlanRecord;
@@ -81,6 +83,12 @@ class Plans extends Component
         $record->currency = $plan->currency;
         $record->billingInterval = $plan->billingInterval;
         $record->billingIntervalCount = $plan->billingIntervalCount;
+        $record->termType = $plan->termType;
+        $record->seasonStartDate = Db::prepareDateForDb($plan->seasonStartDate);
+        $record->seasonEndDate = Db::prepareDateForDb($plan->seasonEndDate);
+        $record->seasonRepeats = $plan->seasonRepeats;
+        $record->prorate = $plan->prorate;
+        $record->prorationBasis = $plan->prorationBasis;
         $record->trialDays = $plan->trialDays;
         $record->sortOrder = $plan->sortOrder;
         $record->enabled = $plan->enabled;
@@ -162,6 +170,12 @@ class Plans extends Component
             $plan->currency = $row['currency'];
             $plan->billingInterval = $row['billingInterval'];
             $plan->billingIntervalCount = (int)$row['billingIntervalCount'];
+            $plan->termType = $row['termType'] ?? Plan::TERM_RECURRING;
+            $plan->seasonStartDate = DateTimeHelper::toDateTime($row['seasonStartDate'] ?? null) ?: null;
+            $plan->seasonEndDate = DateTimeHelper::toDateTime($row['seasonEndDate'] ?? null) ?: null;
+            $plan->seasonRepeats = (bool)($row['seasonRepeats'] ?? true);
+            $plan->prorate = (bool)($row['prorate'] ?? false);
+            $plan->prorationBasis = $row['prorationBasis'] ?? Plan::PRORATION_MONTH;
             $plan->trialDays = (int)$row['trialDays'];
             $plan->sortOrder = (int)$row['sortOrder'];
             $plan->enabled = (bool)$row['enabled'];

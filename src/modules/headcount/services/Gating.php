@@ -226,7 +226,7 @@ class Gating extends Component
     }
 
     /**
-     * @deprecated in 5.5.0. Use {@see getRulesForElement()}, which accepts any element.
+     * @deprecated in 5.2.0. Use {@see getRulesForElement()}, which accepts any element.
      * @return AccessRule[]
      */
     public function getRulesForEntry(Entry $entry): array

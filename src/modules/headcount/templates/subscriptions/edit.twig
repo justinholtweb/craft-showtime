@@ -96,4 +96,37 @@
             <dd>{{ subscription.dateCreated|date('Y-m-d H:i') }}</dd>
         </div>
     </div>
+
+    {% set wallet = craft.headcount.plugin.wallet %}
+    {% if wallet.isAppleConfigured() or wallet.isGoogleConfigured() %}
+        <hr>
+
+        <h2>{{ 'Wallet Card'|t('headcount') }}</h2>
+
+        <p class="light">
+            {{ 'The member’s card, for checking what they see or re-sending it to them. Cards update themselves whenever this subscription changes.'|t('headcount') }}
+        </p>
+
+        <div class="buttons">
+            {% if wallet.isAppleConfigured() %}
+                <a class="btn" href="{{ siteUrl('headcount/wallet/apple/' ~ subscription.id) }}">
+                    {{ 'Download Apple Wallet card'|t('headcount') }}
+                </a>
+            {% endif %}
+            {% if wallet.isGoogleConfigured() %}
+                <a class="btn" href="{{ siteUrl('headcount/wallet/google/' ~ subscription.id) }}" rel="noopener" target="_blank">
+                    {{ 'Open Google Wallet card'|t('headcount') }}
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="data">
+            <dt>{{ 'Membership number'|t('headcount') }}</dt>
+            <dd><code>{{ wallet.getSerialNumber(subscription)|slice(0, 8)|replace({'-': ''})|upper }}</code></dd>
+        </div>
+        <div class="data">
+            <dt>{{ 'Registered devices'|t('headcount') }}</dt>
+            <dd>{{ wallet.getRegistrationsForSubscription(subscription)|length }}</dd>
+        </div>
+    {% endif %}
 {% endblock %}

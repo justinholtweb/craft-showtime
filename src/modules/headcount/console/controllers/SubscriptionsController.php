@@ -26,6 +26,25 @@ class SubscriptionsController extends Controller
     }
 
     /**
+     * Email members whose membership expires within the reminder window.
+     *
+     * Run this daily. Each member is reminded once per term, so running it more often
+     * doesn't send more email.
+     *
+     * Usage: php craft headcount/subscriptions/remind
+     */
+    public function actionRemind(): int
+    {
+        $this->stdout("Sending expiration reminders...\n");
+
+        $count = Headcount::getInstance()->subscriptions->sendExpirationReminders();
+
+        $this->stdout("Queued {$count} reminder(s).\n");
+
+        return ExitCode::OK;
+    }
+
+    /**
      * Sync all subscriptions from payment providers.
      *
      * Usage: php craft headcount/subscriptions/sync

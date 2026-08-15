@@ -29,12 +29,67 @@ class Settings extends Model
     /**
      * Whether access rules stop a front-end request on their own.
      *
-     * Before 5.5.0 they never did — Craft resolves an element URL without asking whether
+     * Before 5.2.0 they never did — Craft resolves an element URL without asking whether
      * the visitor may view it, so a rule only applied where a template called
      * `craft.headcount.canAccess()`. Turning this off restores that (rules still evaluate,
      * nothing is blocked automatically), for a site whose templates already handle it.
      */
     public bool $enforceAccessRules = true;
+
+    /**
+     * Wallet passes — Apple Wallet and Google Wallet.
+     *
+     * Every credential here belongs to the *site owner*, not to Headcount: a pass is signed
+     * by the club's own Apple Pass Type ID certificate and issued under the club's own
+     * Google Wallet issuer account, because both platforms bind a pass to the organisation
+     * that vouches for it. A plugin can't ship either. All of these accept environment
+     * variables, and the file paths should point somewhere outside the web root.
+     */
+    public bool $walletEnabled = false;
+
+    /** Shown on the card as the issuing organisation. Falls back to the system name. */
+    public string $walletOrganizationName = '';
+
+    /** Apple requires a human-readable description for accessibility. */
+    public string $walletDescription = 'Membership card';
+
+    public string $walletBackgroundColor = 'rgb(28,28,30)';
+    public string $walletForegroundColor = 'rgb(255,255,255)';
+    public string $walletLabelColor = 'rgb(170,170,180)';
+
+    /**
+     * Directory holding the pass images: icon.png, icon@2x.png, logo.png, logo@2x.png.
+     * Apple rejects a pass with no icon, so this is effectively required for Apple.
+     */
+    public string $walletImagePath = '';
+
+    // Apple Wallet
+    public bool $appleWalletEnabled = false;
+    public string $applePassTypeIdentifier = '';
+    public string $appleTeamIdentifier = '';
+
+    /** Path to the Pass Type ID certificate exported as .p12, and its export password. */
+    public string $appleCertificatePath = '';
+    public string $appleCertificatePassword = '';
+
+    /** Path to Apple's WWDR intermediate certificate (.pem). */
+    public string $appleWwdrCertificatePath = '';
+
+    /**
+     * Whether to run the PassKit web service — device registration plus APNs pushes, so a
+     * card already on a phone updates itself when the membership changes.
+     *
+     * Off, passes are still issued and still carry their expiry date; they just go stale on
+     * the device if a membership is cancelled mid-term.
+     */
+    public bool $applePassUpdatesEnabled = true;
+
+    // Google Wallet
+    public bool $googleWalletEnabled = false;
+    public string $googleWalletIssuerId = '';
+
+    /** Path to the service account JSON key with Wallet Object Issuer access. */
+    public string $googleWalletServiceAccountPath = '';
 
     // Email
     public bool $sendWelcomeEmail = true;
@@ -62,6 +117,27 @@ class Settings extends Model
             [['checkoutSuccessUrl', 'checkoutCancelUrl', 'loginUrl', 'pricingUrl'], 'string'],
             [['outgoingWebhookUrl', 'outgoingWebhookSecret', 'apiKey'], 'string'],
             [['stripeEnabled', 'paypalEnabled', 'paypalSandbox', 'enforceAccessRules'], 'boolean'],
+            [[
+                'walletOrganizationName',
+                'walletDescription',
+                'walletBackgroundColor',
+                'walletForegroundColor',
+                'walletLabelColor',
+                'walletImagePath',
+                'applePassTypeIdentifier',
+                'appleTeamIdentifier',
+                'appleCertificatePath',
+                'appleCertificatePassword',
+                'appleWwdrCertificatePath',
+                'googleWalletIssuerId',
+                'googleWalletServiceAccountPath',
+            ], 'string'],
+            [[
+                'walletEnabled',
+                'appleWalletEnabled',
+                'applePassUpdatesEnabled',
+                'googleWalletEnabled',
+            ], 'boolean'],
             [[
                 'sendWelcomeEmail',
                 'sendPaymentReceiptEmail',

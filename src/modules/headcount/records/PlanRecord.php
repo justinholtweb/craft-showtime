@@ -16,6 +16,12 @@ use craft\db\ActiveRecord;
  * @property string $currency
  * @property string $billingInterval
  * @property int $billingIntervalCount
+ * @property string $termType Either `recurring` or `fixed` — see {@see \justinholtweb\headcount\models\Plan}
+ * @property string|null $seasonStartDate
+ * @property string|null $seasonEndDate
+ * @property bool $seasonRepeats Whether the season window rolls forward a year at a time
+ * @property bool $prorate
+ * @property string $prorationBasis Either `month` or `day`
  * @property int $trialDays
  * @property int $sortOrder
  * @property bool $enabled

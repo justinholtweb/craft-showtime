@@ -3,6 +3,7 @@
 namespace justinholtweb\headcount\migrations;
 
 use craft\db\Migration;
+use justinholtweb\headcount\models\Plan;
 
 class Install extends Migration
 {
@@ -14,12 +15,14 @@ class Install extends Migration
         $this->_createDripSchedulesTable();
         $this->_createCouponsTable();
         $this->_createWebhookLogsTable();
+        $this->_createWalletRegistrationsTable();
 
         return true;
     }
 
     public function safeDown(): bool
     {
+        $this->dropTableIfExists('{{%headcount_wallet_registrations}}');
         $this->dropTableIfExists('{{%headcount_webhook_logs}}');
         $this->dropTableIfExists('{{%headcount_coupons}}');
         $this->dropTableIfExists('{{%headcount_drip_schedules}}');
@@ -44,6 +47,14 @@ class Install extends Migration
             'currency' => $this->string(3)->notNull()->defaultValue('USD'),
             'billingInterval' => $this->enum('billingInterval', ['day', 'week', 'month', 'year'])->notNull()->defaultValue('month'),
             'billingIntervalCount' => $this->integer()->notNull()->defaultValue(1),
+            // A `fixed` plan is one payment for a shared calendar window (a club season)
+            // rather than a per-member billing cycle. See models/Plan.php.
+            'termType' => $this->string(16)->notNull()->defaultValue(Plan::TERM_RECURRING),
+            'seasonStartDate' => $this->dateTime(),
+            'seasonEndDate' => $this->dateTime(),
+            'seasonRepeats' => $this->boolean()->notNull()->defaultValue(true),
+            'prorate' => $this->boolean()->notNull()->defaultValue(false),
+            'prorationBasis' => $this->string(16)->notNull()->defaultValue(Plan::PRORATION_MONTH),
             'trialDays' => $this->integer()->notNull()->defaultValue(0),
             'sortOrder' => $this->integer()->notNull()->defaultValue(0),
             'enabled' => $this->boolean()->notNull()->defaultValue(true),
@@ -178,5 +189,33 @@ class Install extends Migration
 
         $this->createIndex(null, '{{%headcount_webhook_logs}}', ['eventId']);
         $this->createIndex(null, '{{%headcount_webhook_logs}}', ['gateway', 'eventType']);
+    }
+
+    /**
+     * See m260813_100000_wallet_passes for why per-device rows exist at all.
+     */
+    private function _createWalletRegistrationsTable(): void
+    {
+        $this->createTable('{{%headcount_wallet_registrations}}', [
+            'id' => $this->primaryKey(),
+            'deviceLibraryIdentifier' => $this->string(255)->notNull(),
+            'passTypeIdentifier' => $this->string(255)->notNull(),
+            'serialNumber' => $this->string(255)->notNull(),
+            'pushToken' => $this->string(255)->notNull(),
+            'subscriptionId' => $this->integer(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        $this->createIndex(
+            null,
+            '{{%headcount_wallet_registrations}}',
+            ['deviceLibraryIdentifier', 'passTypeIdentifier', 'serialNumber'],
+            true,
+        );
+        $this->createIndex(null, '{{%headcount_wallet_registrations}}', ['serialNumber']);
+        $this->createIndex(null, '{{%headcount_wallet_registrations}}', ['subscriptionId']);
+        $this->addForeignKey(null, '{{%headcount_wallet_registrations}}', ['subscriptionId'], '{{%headcount_subscriptions}}', ['id'], 'CASCADE');
     }
 }

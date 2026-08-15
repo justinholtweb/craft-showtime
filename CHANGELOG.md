@@ -1,5 +1,32 @@
 # Release Notes for Showtime
 
+## 5.2.0 - unreleased
+
+### Added
+
+- Picks up Headcount's **season memberships**: a membership plan can now run to a fixed
+  calendar window shared by every member — a club's July–June year — instead of billing on
+  each member's own anniversary, with the window rolling forward automatically each year and
+  optional pro-rata pricing for anyone joining mid-season. Season plans are charged as a
+  one-off Stripe payment, so they can't be paid for with PayPal.
+- Picks up Headcount's **Apple Wallet and Google Wallet membership cards**, configured under
+  a new *Memberships → Wallet Cards* settings screen, linked from Showtime's composite
+  settings page. The credentials are the site owner's own Apple Pass Type ID certificate and
+  Google Wallet issuer account. Apple cards keep themselves up to date on the device when a
+  membership changes.
+- Two new membership commands worth a daily cron entry:
+  `headcount/subscriptions/expire` (now retires finished season terms as well as cancelled
+  memberships) and `headcount/subscriptions/remind` (the expiration reminder email, which
+  previously had no caller anywhere in the bundle and never sent).
+
+### Fixed
+
+- Headcount's expiration reminder email was never sent, and subscriptions past their end date
+  that the member hadn't cancelled were left `active` indefinitely. Both are fixed upstream
+  and come in with this sync.
+- `src/modules/headcount/services/Gating.php` carried a hand-edited `@deprecated in 5.5.0`
+  note that never matched any release; the sync restores Headcount's own `5.2.0`.
+
 ## 5.1.0 - 2026-08-13
 
 ### Added

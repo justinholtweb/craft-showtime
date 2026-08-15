@@ -122,6 +122,48 @@ class HeadcountVariable
     }
 
     /**
+     * Whether wallet cards are available at all, for hiding the buttons entirely.
+     */
+    public function walletEnabled(): bool
+    {
+        $wallet = Headcount::getInstance()->wallet;
+
+        return $wallet->isAppleConfigured() || $wallet->isGoogleConfigured();
+    }
+
+    /**
+     * The Apple Wallet download link for a membership, or null when Apple isn't set up.
+     *
+     * Null rather than an empty string so a template can write
+     * `{% if url = craft.headcount.appleWalletUrl(sub) %}` and get the right answer on a
+     * site that only issues Google cards.
+     */
+    public function appleWalletUrl(Subscription $subscription): ?string
+    {
+        if (!Headcount::getInstance()->wallet->isAppleConfigured()) {
+            return null;
+        }
+
+        return \craft\helpers\UrlHelper::siteUrl('headcount/wallet/apple/' . $subscription->id);
+    }
+
+    /**
+     * The Google Wallet save link for a membership, or null when Google isn't set up.
+     *
+     * This is a link to *this site*, which then redirects on to Google — the real save link
+     * is a signed JWT that has to be minted per request, and building one for every card on
+     * a page would mean an API round trip each time the page renders.
+     */
+    public function googleWalletUrl(Subscription $subscription): ?string
+    {
+        if (!Headcount::getInstance()->wallet->isGoogleConfigured()) {
+            return null;
+        }
+
+        return \craft\helpers\UrlHelper::siteUrl('headcount/wallet/google/' . $subscription->id);
+    }
+
+    /**
      * Check if drip content is unlocked.
      */
     public function isUnlocked(Entry $entry): bool

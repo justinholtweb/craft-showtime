@@ -69,7 +69,7 @@ class Plugin extends BasePlugin
         'owl' => \justinholtweb\owl\Owl::class,
     ];
 
-    public string $schemaVersion = '1.0.0';
+    public string $schemaVersion = '1.1.0';
 
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;

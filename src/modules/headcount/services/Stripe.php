@@ -38,11 +38,6 @@ class Stripe extends Component
         $user = Craft::$app->getUsers()->getUserById($userId);
 
         $params = [
-            'mode' => 'subscription',
-            'line_items' => [[
-                'price' => $plan->stripePriceId,
-                'quantity' => 1,
-            ]],
             'success_url' => Craft::$app->getSites()->getCurrentSite()->getBaseUrl() . ltrim($settings->checkoutSuccessUrl, '/') . '?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => Craft::$app->getSites()->getCurrentSite()->getBaseUrl() . ltrim($settings->checkoutCancelUrl, '/'),
             'client_reference_id' => (string)$userId,
@@ -53,14 +48,24 @@ class Stripe extends Component
             ],
         ];
 
-        if ($user && $user->email) {
-            $params['customer_email'] = $user->email;
+        if ($plan->isFixedTerm()) {
+            $params = array_replace_recursive($params, $this->_fixedTermParams($plan));
+        } else {
+            $params['mode'] = 'subscription';
+            $params['line_items'] = [[
+                'price' => $plan->stripePriceId,
+                'quantity' => 1,
+            ]];
+
+            if ($plan->trialDays > 0) {
+                $params['subscription_data'] = [
+                    'trial_period_days' => $plan->trialDays,
+                ];
+            }
         }
 
-        if ($plan->trialDays > 0) {
-            $params['subscription_data'] = [
-                'trial_period_days' => $plan->trialDays,
-            ];
+        if ($user && $user->email) {
+            $params['customer_email'] = $user->email;
         }
 
         if ($couponCode) {
@@ -70,6 +75,49 @@ class Stripe extends Component
         }
 
         return $this->getClient()->checkout->sessions->create($params);
+    }
+
+    /**
+     * Checkout parameters for a season membership.
+     *
+     * A season is bought once, not billed on a cycle, so this is a `payment` session rather
+     * than a `subscription` one — Stripe has no subscription object at the end of it, and
+     * nothing renews. The price is built inline instead of using the plan's stored Stripe
+     * Price because a pro-rata plan charges a different amount to everyone who joins on a
+     * different day; a stored Price can only hold one number.
+     *
+     * The term dates ride along in metadata so the webhook can stamp the same window onto
+     * the subscription without recomputing it — by then the clock has moved on, and a
+     * purchase made seconds before midnight on the last day of a season must not be
+     * recorded against the next one.
+     */
+    private function _fixedTermParams(Plan $plan): array
+    {
+        $termStart = $plan->getTermStart();
+        $termEnd = $plan->getTermEnd();
+        $amount = $plan->getProratedPrice();
+
+        return [
+            'mode' => 'payment',
+            'line_items' => [[
+                'quantity' => 1,
+                'price_data' => [
+                    'currency' => strtolower($plan->currency),
+                    'unit_amount' => (int)round($amount * 100),
+                    'product_data' => [
+                        'name' => $plan->name,
+                        'description' => Craft::t('headcount', 'Membership through {date}', [
+                            'date' => $termEnd?->format('j M Y') ?? '',
+                        ]),
+                    ],
+                ],
+            ]],
+            'metadata' => [
+                'term_type' => Plan::TERM_FIXED,
+                'term_start' => $termStart?->format(\DateTimeInterface::ATOM),
+                'term_end' => $termEnd?->format(\DateTimeInterface::ATOM),
+            ],
+        ];
     }
 
     public function createPortalSession(string $customerId, ?string $returnUrl = null): PortalSession
@@ -112,6 +160,12 @@ class Stripe extends Component
 
     public function syncPlan(Plan $plan): void
     {
+        // A season plan has no single price to store: pro-rata means the amount depends on
+        // when the member joins, so its line item is built per checkout instead.
+        if ($plan->isFixedTerm()) {
+            return;
+        }
+
         if (!$plan->stripePriceId) {
             $product = $this->createProduct($plan);
             $price = $this->createPrice($plan, $product->id);

@@ -1,0 +1,88 @@
+{% set organization = card ? card.organizationName : craft.app.systemName %}
+<!doctype html>
+<html lang="{{ craft.app.language }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ (valid ? 'Valid membership' : 'Not valid')|t('headcount') }}</title>
+    <style>
+        :root { color-scheme: light dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f4f4f5;
+            color: #18181b;
+        }
+        .card {
+            width: 100%;
+            max-width: 26rem;
+            background: #fff;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgb(0 0 0 / .1), 0 8px 24px rgb(0 0 0 / .08);
+        }
+        .verdict {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            color: #fff;
+            background: {{ valid ? '#15803d' : '#b91c1c' }};
+        }
+        .verdict h1 { margin: 0; font-size: 1.75rem; letter-spacing: -.02em; }
+        .verdict p { margin: .35rem 0 0; opacity: .85; font-size: .95rem; }
+        dl { margin: 0; padding: 1.25rem 1.5rem; }
+        div.row { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; }
+        div.row + div.row { border-top: 1px solid #e4e4e7; }
+        dt { color: #71717a; font-size: .875rem; }
+        dd { margin: 0; font-weight: 600; text-align: right; }
+        footer { padding: 0 1.5rem 1.25rem; color: #a1a1aa; font-size: .8rem; text-align: center; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #09090b; color: #fafafa; }
+            .card { background: #18181b; box-shadow: none; }
+            div.row + div.row { border-color: #27272a; }
+            dt { color: #a1a1aa; }
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <div class="verdict">
+            <h1>{{ valid ? 'Valid'|t('headcount') : 'Not valid'|t('headcount') }}</h1>
+            <p>
+                {% if valid %}
+                    {{ '{organization} membership'|t('headcount', { organization: organization }) }}
+                {% else %}
+                    {{ 'This card is expired or unrecognised.'|t('headcount') }}
+                {% endif %}
+            </p>
+        </div>
+
+        {% if valid and card %}
+            <dl>
+                <div class="row">
+                    <dt>{{ 'Member'|t('headcount') }}</dt>
+                    <dd>{{ card.memberName }}</dd>
+                </div>
+                <div class="row">
+                    <dt>{{ 'Membership'|t('headcount') }}</dt>
+                    <dd>{{ card.planName }}</dd>
+                </div>
+                {% if card.expiryDate %}
+                    <div class="row">
+                        <dt>{{ 'Valid until'|t('headcount') }}</dt>
+                        <dd>{{ card.expiryDate|date('j M Y') }}</dd>
+                    </div>
+                {% endif %}
+            </dl>
+        {% endif %}
+
+        <footer>{{ 'Checked {time}'|t('headcount', { time: now|date('j M Y, H:i') }) }}</footer>
+    </main>
+</body>
+</html>

@@ -68,6 +68,10 @@ class ApiController extends Controller
             'currency' => $plan->currency,
             'billingInterval' => $plan->billingInterval,
             'billingIntervalCount' => $plan->billingIntervalCount,
+            'termType' => $plan->termType,
+            'seasonStart' => $plan->getTermStart()?->format(\DateTimeInterface::ATOM),
+            'seasonEnd' => $plan->getTermEnd()?->format(\DateTimeInterface::ATOM),
+            'currentPrice' => $plan->getProratedPrice(),
             'trialDays' => $plan->trialDays,
             'features' => $plan->features,
         ], $plans);
@@ -164,11 +168,20 @@ class ApiController extends Controller
             return $this->asJson(['error' => 'Plan not found'])->setStatusCode(404);
         }
 
+        if ($plan->hasSeasonEnded()) {
+            return $this->asJson(['error' => 'Season has ended'])->setStatusCode(410);
+        }
+
         $userId = Craft::$app->getUser()->getId();
 
         if ($gateway === 'stripe') {
             $session = Headcount::getInstance()->stripe->createCheckoutSession($plan, $userId, $coupon);
             return $this->asJson(['checkoutUrl' => $session->url, 'sessionId' => $session->id]);
+        }
+
+        // See CheckoutController: PayPal's Subscriptions API can't express a fixed term.
+        if ($gateway === 'paypal' && $plan->isFixedTerm()) {
+            return $this->asJson(['error' => 'Season memberships are not available via PayPal'])->setStatusCode(400);
         }
 
         if ($gateway === 'paypal') {

@@ -83,6 +83,12 @@ class PlansController extends Controller
         $plan->currency = $request->getBodyParam('currency', $plan->currency);
         $plan->billingInterval = $request->getBodyParam('billingInterval', $plan->billingInterval);
         $plan->billingIntervalCount = (int)$request->getBodyParam('billingIntervalCount', $plan->billingIntervalCount);
+        $plan->termType = $request->getBodyParam('termType', $plan->termType);
+        $plan->setSeasonStartDate($request->getBodyParam('seasonStartDate'));
+        $plan->setSeasonEndDate($request->getBodyParam('seasonEndDate'));
+        $plan->seasonRepeats = (bool)$request->getBodyParam('seasonRepeats', $plan->seasonRepeats);
+        $plan->prorate = (bool)$request->getBodyParam('prorate', $plan->prorate);
+        $plan->prorationBasis = $request->getBodyParam('prorationBasis', $plan->prorationBasis);
         $plan->trialDays = (int)$request->getBodyParam('trialDays', $plan->trialDays);
         $plan->enabled = (bool)$request->getBodyParam('enabled', $plan->enabled);
         $plan->sortOrder = (int)$request->getBodyParam('sortOrder', $plan->sortOrder);

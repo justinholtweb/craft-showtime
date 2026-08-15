@@ -26,7 +26,20 @@ class CheckoutController extends Controller
             return $this->asFailure('Plan not found or not available.');
         }
 
+        // A one-off season that has finished has nothing left to sell. (A repeating season
+        // never reports this — it has already rolled on to the next one.)
+        if ($plan->hasSeasonEnded()) {
+            return $this->asFailure(Craft::t('headcount', 'That season has ended.'));
+        }
+
         $userId = Craft::$app->getUser()->getId();
+
+        // PayPal is wired to its Subscriptions API, which bills on a cycle — it cannot
+        // express "one payment, access until 30 June". Refusing is better than silently
+        // signing a member up to a recurring plan they didn't buy.
+        if ($gateway === 'paypal' && $plan->isFixedTerm()) {
+            return $this->asFailure(Craft::t('headcount', 'Season memberships can\'t be paid for with PayPal. Please use card payment.'));
+        }
 
         if ($gateway === 'paypal' && Headcount::getInstance()->getSettings()->paypalEnabled) {
             $result = Headcount::getInstance()->paypal->createSubscription($plan, $userId);

@@ -22,16 +22,20 @@ use craft\web\View;
 use justinholtweb\headcount\assets\HeadcountAsset;
 use justinholtweb\headcount\elements\Subscription;
 use justinholtweb\headcount\models\Settings;
+use justinholtweb\headcount\services\ApplePass;
+use justinholtweb\headcount\services\ApplePush;
 use justinholtweb\headcount\services\Coupons;
 use justinholtweb\headcount\services\Drip;
 use justinholtweb\headcount\services\Emails;
 use justinholtweb\headcount\services\Gating;
+use justinholtweb\headcount\services\GoogleWallet;
 use justinholtweb\headcount\services\Members;
 use justinholtweb\headcount\services\PayPal;
 use justinholtweb\headcount\services\Plans;
 use justinholtweb\headcount\services\Reporting;
 use justinholtweb\headcount\services\Stripe;
 use justinholtweb\headcount\services\Subscriptions;
+use justinholtweb\headcount\services\Wallet;
 use justinholtweb\headcount\services\Webhooks;
 use justinholtweb\headcount\twig\HeadcountTwigExtension;
 use justinholtweb\headcount\twig\HeadcountVariable;
@@ -54,12 +58,16 @@ use yii\base\Event;
  * @property-read Members $members
  * @property-read Reporting $reporting
  * @property-read Emails $emails
+ * @property-read Wallet $wallet
+ * @property-read ApplePass $applePass
+ * @property-read ApplePush $applePush
+ * @property-read GoogleWallet $googleWallet
  * @property-read Settings $settings
  * @method Settings getSettings()
  */
 class Headcount extends Plugin
 {
-    public string $schemaVersion = '1.1.0';
+    public string $schemaVersion = '1.2.0';
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
 
@@ -111,6 +119,10 @@ class Headcount extends Plugin
                 'members' => Members::class,
                 'reporting' => Reporting::class,
                 'emails' => Emails::class,
+                'wallet' => Wallet::class,
+                'applePass' => ApplePass::class,
+                'applePush' => ApplePush::class,
+                'googleWallet' => GoogleWallet::class,
             ],
         ];
     }
@@ -359,6 +371,7 @@ class Headcount extends Plugin
                 $event->rules['headcount/settings/stripe'] = 'headcount/settings/stripe';
                 $event->rules['headcount/settings/paypal'] = 'headcount/settings/paypal';
                 $event->rules['headcount/settings/emails'] = 'headcount/settings/emails';
+                $event->rules['headcount/settings/wallet'] = 'headcount/settings/wallet';
             }
         );
     }
@@ -373,6 +386,23 @@ class Headcount extends Plugin
                 $event->rules['headcount/checkout/success'] = 'headcount/checkout/success';
                 $event->rules['headcount/checkout/cancel'] = 'headcount/checkout/cancel';
                 $event->rules['headcount/portal'] = 'headcount/portal/redirect';
+
+                // Member-facing wallet card links.
+                $event->rules['headcount/wallet/apple/<subscriptionId:\d+>'] = 'headcount/wallet/apple';
+                $event->rules['headcount/wallet/google/<subscriptionId:\d+>'] = 'headcount/wallet/google';
+                $event->rules['headcount/wallet/verify'] = 'headcount/wallet/verify';
+
+                // Apple's PassKit web service. The paths below the `v1` prefix are Apple's,
+                // not ours — iOS constructs them from the `webServiceURL` baked into each
+                // pass, so they can't be renamed. Matching on the HTTP verb is what
+                // separates registering a device from unregistering it: same URL, and the
+                // method is the whole difference.
+                $device = 'headcount/wallet/v1/devices/<deviceLibraryIdentifier:[^\/]+>/registrations/<passTypeIdentifier:[^\/]+>';
+                $event->rules["POST {$device}/<serialNumber:[^\/]+>"] = 'headcount/wallet/register-device';
+                $event->rules["DELETE {$device}/<serialNumber:[^\/]+>"] = 'headcount/wallet/unregister-device';
+                $event->rules["GET {$device}"] = 'headcount/wallet/list-registrations';
+                $event->rules['GET headcount/wallet/v1/passes/<passTypeIdentifier:[^\/]+>/<serialNumber:[^\/]+>'] = 'headcount/wallet/latest-pass';
+                $event->rules['POST headcount/wallet/v1/log'] = 'headcount/wallet/log';
             }
         );
     }

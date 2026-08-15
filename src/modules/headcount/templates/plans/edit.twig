@@ -71,34 +71,107 @@
     }) }}
 
     {{ forms.selectField({
-        label: 'Billing Interval'|t('headcount'),
-        name: 'billingInterval',
-        value: plan.billingInterval,
+        label: 'Term Type'|t('headcount'),
+        instructions: 'Recurring plans renew on each member\'s own anniversary. Season plans are one payment for a fixed window that every member shares — everyone expires on the same date.'|t('headcount'),
+        id: 'termType',
+        name: 'termType',
+        value: plan.termType,
         options: [
-            { label: 'Day', value: 'day' },
-            { label: 'Week', value: 'week' },
-            { label: 'Month', value: 'month' },
-            { label: 'Year', value: 'year' },
+            { label: 'Recurring subscription'|t('headcount'), value: 'recurring' },
+            { label: 'Fixed season'|t('headcount'), value: 'fixed' },
         ],
+        toggle: true,
+        targetPrefix: 'term-',
     }) }}
 
-    {{ forms.textField({
-        label: 'Billing Interval Count'|t('headcount'),
-        instructions: 'e.g., 1 for monthly, 3 for quarterly.'|t('headcount'),
-        name: 'billingIntervalCount',
-        value: plan.billingIntervalCount,
-        type: 'number',
-        min: 1,
-    }) }}
+    <div id="term-recurring" class="{{ plan.isFixedTerm() ? 'hidden' }}">
+        {{ forms.selectField({
+            label: 'Billing Interval'|t('headcount'),
+            name: 'billingInterval',
+            value: plan.billingInterval,
+            options: [
+                { label: 'Day', value: 'day' },
+                { label: 'Week', value: 'week' },
+                { label: 'Month', value: 'month' },
+                { label: 'Year', value: 'year' },
+            ],
+        }) }}
 
-    {{ forms.textField({
-        label: 'Trial Days'|t('headcount'),
-        instructions: 'Number of free trial days. 0 for no trial.'|t('headcount'),
-        name: 'trialDays',
-        value: plan.trialDays,
-        type: 'number',
-        min: 0,
-    }) }}
+        {{ forms.textField({
+            label: 'Billing Interval Count'|t('headcount'),
+            instructions: 'e.g., 1 for monthly, 3 for quarterly.'|t('headcount'),
+            name: 'billingIntervalCount',
+            value: plan.billingIntervalCount,
+            type: 'number',
+            min: 1,
+        }) }}
+
+        {{ forms.textField({
+            label: 'Trial Days'|t('headcount'),
+            instructions: 'Number of free trial days. 0 for no trial.'|t('headcount'),
+            name: 'trialDays',
+            value: plan.trialDays,
+            type: 'number',
+            min: 0,
+        }) }}
+    </div>
+
+    <div id="term-fixed" class="{{ not plan.isFixedTerm() ? 'hidden' }}">
+        {{ forms.dateField({
+            label: 'Season Starts'|t('headcount'),
+            instructions: 'The first day of the membership year.'|t('headcount'),
+            name: 'seasonStartDate',
+            value: plan.seasonStartDate,
+            errors: plan.getErrors('seasonStartDate'),
+        }) }}
+
+        {{ forms.dateField({
+            label: 'Season Ends'|t('headcount'),
+            instructions: 'The last day of the membership year. Members keep access until the end of this day, then expire together.'|t('headcount'),
+            name: 'seasonEndDate',
+            value: plan.seasonEndDate,
+            errors: plan.getErrors('seasonEndDate'),
+        }) }}
+
+        {{ forms.lightswitchField({
+            label: 'Repeats Every Year'|t('headcount'),
+            instructions: 'Roll the window forward automatically when the season ends, so next year sells itself. Turn this off for a one-off season that should stop selling once it finishes.'|t('headcount'),
+            name: 'seasonRepeats',
+            on: plan.seasonRepeats,
+        }) }}
+
+        {{ forms.lightswitchField({
+            label: 'Pro-rata Mid-season Joins'|t('headcount'),
+            instructions: 'Charge someone joining part-way through only for the part of the season they get. Off means everyone pays the full price whenever they join.'|t('headcount'),
+            id: 'prorate',
+            name: 'prorate',
+            on: plan.prorate,
+            toggle: '#proration-basis',
+        }) }}
+
+        <div id="proration-basis" class="{{ not plan.prorate ? 'hidden' }}">
+            {{ forms.selectField({
+                label: 'Pro-rata Basis'|t('headcount'),
+                instructions: 'By month, a member joining in October of a July–June season pays nine twelfths — the whole months they can still use. By day is exact to the day, but produces less familiar prices.'|t('headcount'),
+                name: 'prorationBasis',
+                value: plan.prorationBasis,
+                options: [
+                    { label: 'Whole months remaining'|t('headcount'), value: 'month' },
+                    { label: 'Days remaining'|t('headcount'), value: 'day' },
+                ],
+            }) }}
+        </div>
+
+        {% set window = plan.getSeasonWindow() %}
+        {% if window %}
+            <p class="light">
+                {{ 'Currently selling: {start} to {end}.'|t('headcount', {
+                    start: window.start|date('j M Y'),
+                    end: window.end|date('j M Y'),
+                }) }}
+            </p>
+        {% endif %}
+    </div>
 
     <hr>
 

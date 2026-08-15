@@ -82,7 +82,7 @@
     <h2>{{ 'Memberships'|t('showtime') }}</h2>
 
     <p>
-        {{ 'Membership settings — payment gateways, emails, and the REST API key — have their own screens:'|t('showtime') }}
+        {{ 'Membership settings — payment gateways, emails, wallet cards, and the REST API key — have their own screens:'|t('showtime') }}
     </p>
 
     <ul>
@@ -90,5 +90,6 @@
         <li><a class="go" href="{{ cpUrl('headcount/settings/stripe') }}">{{ 'Stripe'|t('showtime') }}</a></li>
         <li><a class="go" href="{{ cpUrl('headcount/settings/paypal') }}">{{ 'PayPal'|t('showtime') }}</a></li>
         <li><a class="go" href="{{ cpUrl('headcount/settings/emails') }}">{{ 'Emails'|t('showtime') }}</a></li>
+        <li><a class="go" href="{{ cpUrl('headcount/settings/wallet') }}">{{ 'Wallet Cards'|t('showtime') }}</a></li>
     </ul>
 {% endif %}

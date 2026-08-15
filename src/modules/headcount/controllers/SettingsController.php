@@ -50,6 +50,13 @@ class SettingsController extends Controller
         ]);
     }
 
+    public function actionWallet(): Response
+    {
+        return $this->renderTemplate('headcount/settings/wallet', [
+            'settings' => Headcount::getInstance()->getSettings(),
+        ]);
+    }
+
     public function actionEmails(): Response
     {
         return $this->renderTemplate('headcount/settings/emails', [
@@ -90,6 +97,26 @@ class SettingsController extends Controller
         $settings->sendCancellationEmail = (bool)$request->getBodyParam('sendCancellationEmail', $settings->sendCancellationEmail);
         $settings->sendDripUnlockedEmail = (bool)$request->getBodyParam('sendDripUnlockedEmail', $settings->sendDripUnlockedEmail);
         $settings->expirationReminderDays = (int)$request->getBodyParam('expirationReminderDays', $settings->expirationReminderDays);
+
+        $settings->walletEnabled = (bool)$request->getBodyParam('walletEnabled', $settings->walletEnabled);
+        $settings->walletOrganizationName = $request->getBodyParam('walletOrganizationName', $settings->walletOrganizationName);
+        $settings->walletDescription = $request->getBodyParam('walletDescription', $settings->walletDescription);
+        $settings->walletBackgroundColor = $request->getBodyParam('walletBackgroundColor', $settings->walletBackgroundColor);
+        $settings->walletForegroundColor = $request->getBodyParam('walletForegroundColor', $settings->walletForegroundColor);
+        $settings->walletLabelColor = $request->getBodyParam('walletLabelColor', $settings->walletLabelColor);
+        $settings->walletImagePath = $request->getBodyParam('walletImagePath', $settings->walletImagePath);
+
+        $settings->appleWalletEnabled = (bool)$request->getBodyParam('appleWalletEnabled', $settings->appleWalletEnabled);
+        $settings->applePassTypeIdentifier = $request->getBodyParam('applePassTypeIdentifier', $settings->applePassTypeIdentifier);
+        $settings->appleTeamIdentifier = $request->getBodyParam('appleTeamIdentifier', $settings->appleTeamIdentifier);
+        $settings->appleCertificatePath = $request->getBodyParam('appleCertificatePath', $settings->appleCertificatePath);
+        $settings->appleCertificatePassword = $request->getBodyParam('appleCertificatePassword', $settings->appleCertificatePassword);
+        $settings->appleWwdrCertificatePath = $request->getBodyParam('appleWwdrCertificatePath', $settings->appleWwdrCertificatePath);
+        $settings->applePassUpdatesEnabled = (bool)$request->getBodyParam('applePassUpdatesEnabled', $settings->applePassUpdatesEnabled);
+
+        $settings->googleWalletEnabled = (bool)$request->getBodyParam('googleWalletEnabled', $settings->googleWalletEnabled);
+        $settings->googleWalletIssuerId = $request->getBodyParam('googleWalletIssuerId', $settings->googleWalletIssuerId);
+        $settings->googleWalletServiceAccountPath = $request->getBodyParam('googleWalletServiceAccountPath', $settings->googleWalletServiceAccountPath);
 
         $settings->outgoingWebhookUrl = $request->getBodyParam('outgoingWebhookUrl', $settings->outgoingWebhookUrl);
         $settings->outgoingWebhookSecret = $request->getBodyParam('outgoingWebhookSecret', $settings->outgoingWebhookSecret);

@@ -7,6 +7,7 @@ use craft\helpers\DateTimeHelper;
 use justinholtweb\headcount\elements\Subscription;
 use justinholtweb\headcount\Headcount;
 use justinholtweb\headcount\jobs\SendOutgoingWebhook;
+use justinholtweb\headcount\models\Plan;
 use justinholtweb\headcount\records\WebhookLogRecord;
 use yii\base\Component;
 
@@ -146,6 +147,14 @@ class Webhooks extends Component
             $stripeSubscription = Headcount::getInstance()->stripe->getSubscription($stripeSubId);
         }
 
+        // A season membership is a one-off payment, so there is no Stripe subscription to
+        // read a period from. The window was fixed when checkout opened and travels in the
+        // session metadata; the amount comes from the session because pro-rata and any
+        // promotion code both mean the member paid something other than the list price.
+        $isFixedTerm = $plan->isFixedTerm() && !$stripeSubId;
+        $termStart = $isFixedTerm ? ($session->metadata->term_start ?? null) : null;
+        $termEnd = $isFixedTerm ? ($session->metadata->term_end ?? null) : null;
+
         $subscription = Headcount::getInstance()->subscriptions->createSubscription([
             'userId' => $userId,
             'planId' => $planId,
@@ -153,12 +162,22 @@ class Webhooks extends Component
             'gatewaySubscriptionId' => $stripeSubId,
             'gatewayCustomerId' => $session->customer ?? null,
             'status' => $this->_mapStripeStatus($stripeSubscription?->status ?? 'active'),
-            'startDate' => $stripeSubscription ? $stripeSubscription->current_period_start : time(),
-            'endDate' => $stripeSubscription ? $stripeSubscription->current_period_end : null,
+            'startDate' => $stripeSubscription
+                ? $stripeSubscription->current_period_start
+                : ($termStart ?: time()),
+            'endDate' => $stripeSubscription
+                ? $stripeSubscription->current_period_end
+                : $termEnd,
             'trialStartDate' => $stripeSubscription?->trial_start,
             'trialEndDate' => $stripeSubscription?->trial_end,
-            'amount' => $plan->price,
+            'amount' => $isFixedTerm && isset($session->amount_total)
+                ? $session->amount_total / 100
+                : $plan->price,
             'currency' => $plan->currency,
+            'metadata' => $isFixedTerm ? [
+                'termType' => Plan::TERM_FIXED,
+                'checkoutSessionId' => $session->id ?? null,
+            ] : null,
         ]);
 
         if ($subscription) {

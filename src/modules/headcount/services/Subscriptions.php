@@ -87,6 +87,10 @@ class Subscriptions extends Component
         // Sync user groups on status change
         Headcount::getInstance()->members->syncUserGroups($subscription);
 
+        // A membership card already on a member's phone shows the old status until it is
+        // told otherwise, so every status change nudges the wallets too.
+        Headcount::getInstance()->wallet->queueUpdate($subscription);
+
         $this->trigger(self::EVENT_AFTER_UPDATE_SUBSCRIPTION, new SubscriptionEvent([
             'subscription' => $subscription,
             'isNew' => false,
@@ -129,6 +133,7 @@ class Subscriptions extends Component
         // Sync user groups if immediately canceled
         if (!$atPeriodEnd) {
             Headcount::getInstance()->members->syncUserGroups($subscription);
+            Headcount::getInstance()->wallet->queueUpdate($subscription);
         }
 
         $this->trigger(self::EVENT_AFTER_CANCEL_SUBSCRIPTION, new SubscriptionEvent([
@@ -165,6 +170,9 @@ class Subscriptions extends Component
 
         // The plan's mapped user group may differ; re-sync.
         Headcount::getInstance()->members->syncUserGroups($subscription);
+
+        // The card names the plan, so it is now out of date.
+        Headcount::getInstance()->wallet->queueUpdate($subscription);
 
         $this->_dispatchWebhook('subscription.updated', $subscription);
 
@@ -220,6 +228,19 @@ class Subscriptions extends Component
         return $query->exists();
     }
 
+    /**
+     * Retire every subscription whose end date has passed.
+     *
+     * Two things end at an end date, and they aren't the same thing:
+     *
+     *  - a member who asked to cancel is **canceled** — they chose to leave;
+     *  - a season membership, or any term that simply ran out, is **expired** — the term was
+     *    always going to end on that date and nobody cancelled anything.
+     *
+     * A recurring subscription that nobody cancelled is left alone: its end date is the end
+     * of a *billing period*, and the gateway will either renew it or tell us it failed. Only
+     * a fixed term expires on its own, which is the whole point of a season.
+     */
     public function processExpiredSubscriptions(): int
     {
         $count = 0;
@@ -232,10 +253,69 @@ class Subscriptions extends Component
             if ($subscription->cancelAtPeriodEnd) {
                 $this->updateSubscriptionStatus($subscription, Subscription::STATUS_CANCELED);
                 $count++;
+                continue;
+            }
+
+            if ($subscription->getPlan()?->isFixedTerm()) {
+                $this->updateSubscriptionStatus($subscription, Subscription::STATUS_EXPIRED);
+                $count++;
             }
         }
 
         return $count;
+    }
+
+    /**
+     * Warn members whose membership runs out within the reminder window.
+     *
+     * Nothing used to call this — the setting and the editable message existed, the send
+     * did not — so a site could configure a reminder that never went out. It matters more
+     * now: a season membership doesn't renew itself, so this email is the only thing
+     * standing between a member and silently losing access on 1 July.
+     *
+     * Each subscription is reminded once per term. The term it was reminded about is
+     * recorded rather than a simple "reminded" flag, so a renewed membership with a new end
+     * date gets its own reminder next year.
+     */
+    public function sendExpirationReminders(): int
+    {
+        $settings = Headcount::getInstance()->getSettings();
+
+        if (!$settings->sendExpirationReminderEmail) {
+            return 0;
+        }
+
+        $now = new DateTime();
+        $threshold = (clone $now)->modify('+' . max(1, $settings->expirationReminderDays) . ' days');
+
+        $subscriptions = Subscription::find()
+            ->status([Subscription::STATUS_ACTIVE, Subscription::STATUS_TRIALING])
+            ->endDate(['and', '>= ' . $now->format('Y-m-d H:i:s'), '<= ' . $threshold->format('Y-m-d H:i:s')])
+            ->all();
+
+        $sent = 0;
+
+        foreach ($subscriptions as $subscription) {
+            $term = $subscription->endDate?->format(\DateTimeInterface::ATOM);
+
+            if ($term === null || ($subscription->metadata['expirationReminderSentFor'] ?? null) === $term) {
+                continue;
+            }
+
+            Headcount::getInstance()->emails->sendExpirationReminderEmail($subscription);
+
+            $subscription->metadata = array_merge($subscription->metadata ?? [], [
+                'expirationReminderSentFor' => $term,
+            ]);
+
+            // Stamped only after the email is queued: a failed save means the member is
+            // reminded twice, which is a great deal better than not at all.
+            Craft::$app->getElements()->saveElement($subscription);
+
+            $sent++;
+        }
+
+        return $sent;
     }
 
     private function _dispatchWebhook(string $event, Subscription $subscription): void
