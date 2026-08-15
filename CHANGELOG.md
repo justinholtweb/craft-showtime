@@ -1,6 +1,8 @@
 # Release Notes for Showtime
 
-## 5.2.0 - unreleased
+## 5.2.0 - 2026-08-15
+
+Bundles Headcount 5.3.0.
 
 ### Added
 
