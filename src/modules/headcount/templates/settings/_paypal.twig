@@ -1,0 +1,42 @@
+{% import '_includes/forms' as forms %}
+{% set readOnly = readOnly ?? false %}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Enable PayPal'|t('headcount'),
+    name: 'paypalEnabled',
+    on: settings.paypalEnabled,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Sandbox Mode'|t('headcount'),
+    instructions: 'Use PayPal sandbox for testing.'|t('headcount'),
+    name: 'paypalSandbox',
+    on: settings.paypalSandbox,
+}) }}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'Client ID'|t('headcount'),
+    name: 'paypalClientId',
+    suggestEnvVars: true,
+    value: settings.paypalClientId,
+}) }}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'Client Secret'|t('headcount'),
+    name: 'paypalClientSecret',
+    suggestEnvVars: true,
+    value: settings.paypalClientSecret,
+}) }}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'Webhook ID'|t('headcount'),
+    instructions: 'Required for webhook signature verification.'|t('headcount'),
+    name: 'paypalWebhookId',
+    suggestEnvVars: true,
+    value: settings.paypalWebhookId,
+}) }}

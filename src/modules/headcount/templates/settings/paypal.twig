@@ -1,48 +1,30 @@
 {% extends '_layouts/cp' %}
-{% import '_includes/forms' as forms %}
 
-{% set title = 'PayPal Settings'|t('headcount') %}
+{% set title = 'PayPal'|t('headcount') %}
 {% set selectedSubnavItem = 'settings' %}
-{% set fullPageForm = true %}
+{#
+  Read-only when `allowAdminChanges` is off. The save action already refuses in that case
+  (SettingsController::beforeAction), so this is about not offering an edit that will be
+  rejected: no form, no save button, disabled inputs, and Craft's standard notice saying why.
+#}
+{% set readOnly = readOnly ?? false %}
+{% set fullPageForm = not readOnly %}
+
+{% if readOnly %}
+    {% set contentNotice = readOnlyNotice() %}
+{% endif %}
+
+{% block sidebar %}
+    {% include 'headcount/settings/_sidebar' with { selected: 'paypal' } only %}
+{% endblock %}
 
 {% block content %}
-    <input type="hidden" name="action" value="headcount/settings/save">
-    {{ csrfInput() }}
+    {% if not readOnly %}
+        <input type="hidden" name="action" value="headcount/settings/save">
+        {{ csrfInput() }}
+    {% endif %}
 
-    {{ forms.lightswitchField({
-        label: 'Enable PayPal'|t('headcount'),
-        name: 'paypalEnabled',
-        on: settings.paypalEnabled,
-    }) }}
-
-    {{ forms.lightswitchField({
-        label: 'Sandbox Mode'|t('headcount'),
-        instructions: 'Use PayPal sandbox for testing.'|t('headcount'),
-        name: 'paypalSandbox',
-        on: settings.paypalSandbox,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Client ID'|t('headcount'),
-        name: 'paypalClientId',
-        suggestEnvVars: true,
-        value: settings.paypalClientId,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Client Secret'|t('headcount'),
-        name: 'paypalClientSecret',
-        suggestEnvVars: true,
-        value: settings.paypalClientSecret,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Webhook ID'|t('headcount'),
-        instructions: 'Required for webhook signature verification.'|t('headcount'),
-        name: 'paypalWebhookId',
-        suggestEnvVars: true,
-        value: settings.paypalWebhookId,
-    }) }}
+    {% include 'headcount/settings/_paypal' %}
 
     <hr>
 
@@ -58,4 +40,6 @@
         <li><code>PAYMENT.SALE.COMPLETED</code></li>
         <li><code>PAYMENT.SALE.DENIED</code></li>
     </ul>
+
+    <p class="light">{{ 'PayPal cannot be used for season memberships — its Subscriptions API only bills on a cycle, so checkout refuses a PayPal season purchase rather than signing the member up to something recurring.'|t('headcount') }}</p>
 {% endblock %}

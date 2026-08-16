@@ -1,0 +1,45 @@
+{#
+  Every setting on one page.
+
+  This is what Craft renders on the plugin's own settings screen
+  (Settings → Plugins → Headcount), which has no room for a second-level nav — Craft
+  namespaces these inputs under `settings` and saves them itself.
+
+  The plugin's own settings section splits the same fragments across a page each; see
+  `_sidebar`. Fields live in the fragments so the two never drift apart.
+#}
+
+<p>
+    {{ 'These settings are also available, grouped and with setup notes, under'|t('headcount') }}
+    <a href="{{ cpUrl('headcount/settings') }}">{{ 'Headcount → Settings'|t('headcount') }}</a>.
+</p>
+
+<hr>
+
+<h2>{{ 'General'|t('headcount') }}</h2>
+{% include 'headcount/settings/_general' %}
+
+<hr>
+
+<h2>{{ 'Stripe'|t('headcount') }}</h2>
+{% include 'headcount/settings/_stripe' %}
+
+<hr>
+
+<h2>{{ 'PayPal'|t('headcount') }}</h2>
+{% include 'headcount/settings/_paypal' %}
+
+<hr>
+
+<h2>{{ 'Wallet Cards'|t('headcount') }}</h2>
+{% include 'headcount/settings/_wallet' %}
+
+<hr>
+
+<h2>{{ 'Emails'|t('headcount') }}</h2>
+{% include 'headcount/settings/_emails' %}
+
+<hr>
+
+<h2>{{ 'API & Webhooks'|t('headcount') }}</h2>
+{% include 'headcount/settings/_api' %}

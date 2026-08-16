@@ -1,0 +1,27 @@
+{#
+  Second-level navigation for the settings section.
+
+  Every settings screen is its own page and its own form, so this is a list of links rather
+  than in-page tabs: each one posts only the fields it shows, and `SettingsController::actionSave()`
+  falls back to the stored value for anything a given page didn't post.
+
+  Expects `selected`. Include with `only` — it needs nothing else from the page.
+#}
+{% set items = [
+    { key: 'general',  label: 'General'|t('headcount'),         url: cpUrl('headcount/settings') },
+    { key: 'stripe',   label: 'Stripe'|t('headcount'),          url: cpUrl('headcount/settings/stripe') },
+    { key: 'paypal',   label: 'PayPal'|t('headcount'),          url: cpUrl('headcount/settings/paypal') },
+    { key: 'wallet',   label: 'Wallet Cards'|t('headcount'),    url: cpUrl('headcount/settings/wallet') },
+    { key: 'emails',   label: 'Emails'|t('headcount'),          url: cpUrl('headcount/settings/emails') },
+    { key: 'api',      label: 'API & Webhooks'|t('headcount'),  url: cpUrl('headcount/settings/api') },
+] %}
+
+<nav>
+    <ul>
+        {% for item in items %}
+            <li>
+                <a href="{{ item.url }}"{% if item.key == selected %} class="sel" aria-current="page"{% endif %}>{{ item.label }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</nav>

@@ -59,22 +59,29 @@ class ApiController extends Controller
     {
         $plans = Headcount::getInstance()->plans->getAllPlans(true);
 
-        $data = array_map(fn($plan) => [
-            'id' => $plan->id,
-            'name' => $plan->name,
-            'handle' => $plan->handle,
-            'description' => $plan->description,
-            'price' => $plan->price,
-            'currency' => $plan->currency,
-            'billingInterval' => $plan->billingInterval,
-            'billingIntervalCount' => $plan->billingIntervalCount,
-            'termType' => $plan->termType,
-            'seasonStart' => $plan->getTermStart()?->format(\DateTimeInterface::ATOM),
-            'seasonEnd' => $plan->getTermEnd()?->format(\DateTimeInterface::ATOM),
-            'currentPrice' => $plan->getProratedPrice(),
-            'trialDays' => $plan->trialDays,
-            'features' => $plan->features,
-        ], $plans);
+        $data = array_map(function($plan) {
+            // The season the plan is currently selling, not the term a member joining right
+            // now would get — those differ mid-season, and a client showing "Season: X to Y"
+            // means the former. What today's joiner would pay is `currentPrice`.
+            $window = $plan->getSeasonWindow();
+
+            return [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'handle' => $plan->handle,
+                'description' => $plan->description,
+                'price' => $plan->price,
+                'currency' => $plan->currency,
+                'billingInterval' => $plan->billingInterval,
+                'billingIntervalCount' => $plan->billingIntervalCount,
+                'termType' => $plan->termType,
+                'seasonStart' => $window ? $window['start']->format(\DateTimeInterface::ATOM) : null,
+                'seasonEnd' => $window ? $window['end']->format(\DateTimeInterface::ATOM) : null,
+                'currentPrice' => $plan->getProratedPrice(),
+                'trialDays' => $plan->trialDays,
+                'features' => $plan->features,
+            ];
+        }, $plans);
 
         return $this->asJson(['plans' => array_values($data)]);
     }

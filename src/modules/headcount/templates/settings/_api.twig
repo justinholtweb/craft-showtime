@@ -1,0 +1,28 @@
+{% import '_includes/forms' as forms %}
+{% set readOnly = readOnly ?? false %}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'API Key'|t('headcount'),
+    instructions: 'Key for server-to-server authentication. Pass it in the `X-Headcount-Api-Key` header — the `?apiKey=` query parameter was removed in 5.2.0.'|t('headcount'),
+    name: 'apiKey',
+    suggestEnvVars: true,
+    value: settings.apiKey,
+}) }}
+
+{{ forms.textField({
+    disabled: readOnly,
+    label: 'Outgoing Webhook URL'|t('headcount'),
+    instructions: 'URL to send outgoing webhook events to. Leave blank to send none.'|t('headcount'),
+    name: 'outgoingWebhookUrl',
+    value: settings.outgoingWebhookUrl,
+}) }}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'Outgoing Webhook Secret'|t('headcount'),
+    instructions: 'Secret for HMAC-SHA256 signing outgoing webhooks.'|t('headcount'),
+    name: 'outgoingWebhookSecret',
+    suggestEnvVars: true,
+    value: settings.outgoingWebhookSecret,
+}) }}

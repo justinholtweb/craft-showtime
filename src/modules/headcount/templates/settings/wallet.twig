@@ -1,161 +1,36 @@
 {% extends '_layouts/cp' %}
-{% import '_includes/forms' as forms %}
 
 {% set title = 'Wallet Cards'|t('headcount') %}
 {% set selectedSubnavItem = 'settings' %}
-{% set fullPageForm = true %}
+{#
+  Read-only when `allowAdminChanges` is off. The save action already refuses in that case
+  (SettingsController::beforeAction), so this is about not offering an edit that will be
+  rejected: no form, no save button, disabled inputs, and Craft's standard notice saying why.
+#}
+{% set readOnly = readOnly ?? false %}
+{% set fullPageForm = not readOnly %}
+
+{% if readOnly %}
+    {% set contentNotice = readOnlyNotice() %}
+{% endif %}
+
+{% block sidebar %}
+    {% include 'headcount/settings/_sidebar' with { selected: 'wallet' } only %}
+{% endblock %}
 
 {% block content %}
-    <input type="hidden" name="action" value="headcount/settings/save">
-    {{ csrfInput() }}
+    {% if not readOnly %}
+        <input type="hidden" name="action" value="headcount/settings/save">
+        {{ csrfInput() }}
+    {% endif %}
 
     <p>
-        {{ 'Members can add a membership card to Apple Wallet or Google Wallet and show it to prove membership away from the site. Both platforms bind a card to the organisation issuing it, so the credentials below are yours, not Headcount’s — you supply them from your own Apple Developer and Google Cloud accounts.'|t('headcount') }}
+        {{ 'Members can add a membership card to Apple Wallet or Google Wallet and show it to prove membership away from the site. Both platforms bind a card to the organisation issuing it, so the credentials below are yours, not Headcount’s — you supply them from your own Apple Developer and Google Cloud accounts. Either platform can be used on its own.'|t('headcount') }}
     </p>
-
-    {{ forms.lightswitchField({
-        label: 'Enable Wallet Cards'|t('headcount'),
-        name: 'walletEnabled',
-        on: settings.walletEnabled,
-    }) }}
 
     <hr>
 
-    <h2>{{ 'Card Appearance'|t('headcount') }}</h2>
-
-    {{ forms.textField({
-        label: 'Organisation Name'|t('headcount'),
-        instructions: 'Shown on the card as the issuer. Defaults to your system name.'|t('headcount'),
-        name: 'walletOrganizationName',
-        value: settings.walletOrganizationName,
-        placeholder: craft.app.systemName,
-    }) }}
-
-    {{ forms.textField({
-        label: 'Card Description'|t('headcount'),
-        instructions: 'Read aloud by screen readers. Apple requires it.'|t('headcount'),
-        name: 'walletDescription',
-        value: settings.walletDescription,
-    }) }}
-
-    {{ forms.textField({
-        label: 'Background Colour'|t('headcount'),
-        instructions: 'CSS `rgb(r,g,b)`. Apple does not accept hex.'|t('headcount'),
-        name: 'walletBackgroundColor',
-        value: settings.walletBackgroundColor,
-    }) }}
-
-    {{ forms.textField({
-        label: 'Text Colour'|t('headcount'),
-        name: 'walletForegroundColor',
-        value: settings.walletForegroundColor,
-    }) }}
-
-    {{ forms.textField({
-        label: 'Label Colour'|t('headcount'),
-        instructions: 'Used for the small captions above each value.'|t('headcount'),
-        name: 'walletLabelColor',
-        value: settings.walletLabelColor,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Image Directory'|t('headcount'),
-        instructions: 'Directory containing `icon.png`, `icon@2x.png`, `logo.png` and `logo@2x.png`. Apple rejects a pass with no icon. Keep it outside your web root. Supports environment variables and aliases.'|t('headcount'),
-        name: 'walletImagePath',
-        suggestEnvVars: true,
-        value: settings.walletImagePath,
-    }) }}
-
-    <hr>
-
-    <h2>{{ 'Apple Wallet'|t('headcount') }}</h2>
-
-    <p>
-        {{ 'From your Apple Developer account: register a Pass Type ID, download its certificate, and export it from Keychain Access as a `.p12`. You also need Apple’s WWDR intermediate certificate in `.pem` form.'|t('headcount') }}
-    </p>
-
-    {{ forms.lightswitchField({
-        label: 'Enable Apple Wallet'|t('headcount'),
-        name: 'appleWalletEnabled',
-        on: settings.appleWalletEnabled,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Pass Type Identifier'|t('headcount'),
-        instructions: 'e.g. `pass.com.yourclub.membership`.'|t('headcount'),
-        name: 'applePassTypeIdentifier',
-        suggestEnvVars: true,
-        value: settings.applePassTypeIdentifier,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Team Identifier'|t('headcount'),
-        instructions: 'The ten-character team ID from your Apple Developer account.'|t('headcount'),
-        name: 'appleTeamIdentifier',
-        suggestEnvVars: true,
-        value: settings.appleTeamIdentifier,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Certificate Path'|t('headcount'),
-        instructions: 'Path to the Pass Type ID certificate (`.p12`). Store it outside your web root.'|t('headcount'),
-        name: 'appleCertificatePath',
-        suggestEnvVars: true,
-        value: settings.appleCertificatePath,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Certificate Password'|t('headcount'),
-        instructions: 'The password the `.p12` was exported with. Use an environment variable.'|t('headcount'),
-        name: 'appleCertificatePassword',
-        suggestEnvVars: true,
-        value: settings.appleCertificatePassword,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'WWDR Certificate Path'|t('headcount'),
-        instructions: 'Path to Apple’s Worldwide Developer Relations intermediate certificate (`.pem`).'|t('headcount'),
-        name: 'appleWwdrCertificatePath',
-        suggestEnvVars: true,
-        value: settings.appleWwdrCertificatePath,
-    }) }}
-
-    {{ forms.lightswitchField({
-        label: 'Keep Cards Up To Date'|t('headcount'),
-        instructions: 'Let cards already on a member’s phone update themselves when a membership changes, by running Apple’s pass web service and sending push notifications. Turn this off and cards still carry their expiry date, but a cancelled membership will keep looking valid on the device until it expires.'|t('headcount'),
-        name: 'applePassUpdatesEnabled',
-        on: settings.applePassUpdatesEnabled,
-    }) }}
-
-    <hr>
-
-    <h2>{{ 'Google Wallet'|t('headcount') }}</h2>
-
-    <p>
-        {{ 'From the Google Pay & Wallet Console: create an issuer account, then create a Google Cloud service account with the Wallet Object Issuer role and authorise it in the console. Download its JSON key.'|t('headcount') }}
-    </p>
-
-    {{ forms.lightswitchField({
-        label: 'Enable Google Wallet'|t('headcount'),
-        name: 'googleWalletEnabled',
-        on: settings.googleWalletEnabled,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Issuer ID'|t('headcount'),
-        instructions: 'The numeric issuer ID from the Google Pay & Wallet Console.'|t('headcount'),
-        name: 'googleWalletIssuerId',
-        suggestEnvVars: true,
-        value: settings.googleWalletIssuerId,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Service Account Key Path'|t('headcount'),
-        instructions: 'Path to the service account JSON key. Store it outside your web root.'|t('headcount'),
-        name: 'googleWalletServiceAccountPath',
-        suggestEnvVars: true,
-        value: settings.googleWalletServiceAccountPath,
-    }) }}
+    {% include 'headcount/settings/_wallet' %}
 
     <hr>
 

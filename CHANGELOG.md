@@ -1,5 +1,36 @@
 # Release Notes for Showtime
 
+## 5.2.1 - 2026-08-15
+
+Bundles Headcount 5.3.1.
+
+### Security
+
+- The membership settings screens now render read-only when `allowAdminChanges` is off,
+  rather than offering fields and a save button that would be refused on submit. Saving was
+  already blocked; this stops the screen implying otherwise.
+
+### Changed
+
+- The membership settings screens are now a navigable section: Stripe, PayPal, Wallet Cards,
+  Emails and a new API & Webhooks screen each get their own page with a shared sidebar,
+  instead of URLs that only this bundle's settings screen linked to. The links here now
+  include API & Webhooks.
+
+### Fixed
+
+- Picks up Headcount's fix for `GET /api/plans` reporting the wrong `seasonStart` — it gave
+  the joining member's start date rather than the season's. **Behaviour change** for anything
+  reading that field since Showtime 5.2.0.
+- Picks up Headcount's fix for **the *Enforce Access Rules* setting being unchangeable from
+  the control panel** — the field was shown and honoured, but never saved.
+- Picks up Headcount's fix for the membership **Settings screen rendering with no styling**.
+  The screen linked from *Showtime → Settings → Memberships → General* served raw form fields
+  with no control-panel layout, because the controller was rendering a template written as a
+  fragment for Craft's own plugin-settings page.
+- The wallet card switches now also appear on that all-in-one screen, not only on the
+  dedicated Wallet Cards screen this bundle links to.
+
 ## 5.2.0 - 2026-08-15
 
 Bundles Headcount 5.3.0.

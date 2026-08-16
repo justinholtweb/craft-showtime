@@ -2,7 +2,7 @@
     "name": "justinholtweb/craft-showtime",
     "description": "Showtime \u2014 events, bookings, and memberships for Craft CMS in one plugin",
     "type": "craft-plugin",
-    "version": "5.2.0",
+    "version": "5.2.1",
     "keywords": [
         "craft",
         "cms",

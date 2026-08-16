@@ -1,0 +1,45 @@
+{% extends '_layouts/cp' %}
+
+{% set title = 'API & Webhooks'|t('headcount') %}
+{% set selectedSubnavItem = 'settings' %}
+{#
+  Read-only when `allowAdminChanges` is off. The save action already refuses in that case
+  (SettingsController::beforeAction), so this is about not offering an edit that will be
+  rejected: no form, no save button, disabled inputs, and Craft's standard notice saying why.
+#}
+{% set readOnly = readOnly ?? false %}
+{% set fullPageForm = not readOnly %}
+
+{% if readOnly %}
+    {% set contentNotice = readOnlyNotice() %}
+{% endif %}
+
+{% block sidebar %}
+    {% include 'headcount/settings/_sidebar' with { selected: 'api' } only %}
+{% endblock %}
+
+{% block content %}
+    {% if not readOnly %}
+        <input type="hidden" name="action" value="headcount/settings/save">
+        {{ csrfInput() }}
+    {% endif %}
+
+    {% include 'headcount/settings/_api' %}
+
+    <hr>
+
+    <h2>{{ 'Outgoing Events'|t('headcount') }}</h2>
+    <p>
+        {{ 'Payloads are signed with HMAC-SHA256 in the'|t('headcount') }}
+        <code>X-Headcount-Signature</code>
+        {{ 'header. These events are emitted:'|t('headcount') }}
+    </p>
+    <ul>
+        <li><code>subscription.created</code></li>
+        <li><code>subscription.updated</code></li>
+        <li><code>subscription.canceled</code></li>
+        <li><code>subscription.expired</code></li>
+        <li><code>member.upgraded</code></li>
+        <li><code>member.downgraded</code></li>
+    </ul>
+{% endblock %}

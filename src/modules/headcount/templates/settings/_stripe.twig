@@ -1,0 +1,36 @@
+{% import '_includes/forms' as forms %}
+{% set readOnly = readOnly ?? false %}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Enable Stripe'|t('headcount'),
+    name: 'stripeEnabled',
+    on: settings.stripeEnabled,
+}) }}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'Secret Key'|t('headcount'),
+    instructions: 'Your Stripe secret key (starts with sk_). Supports environment variables.'|t('headcount'),
+    name: 'stripeSecretKey',
+    suggestEnvVars: true,
+    value: settings.stripeSecretKey,
+}) }}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'Publishable Key'|t('headcount'),
+    instructions: 'Your Stripe publishable key (starts with pk_). Supports environment variables.'|t('headcount'),
+    name: 'stripePublishableKey',
+    suggestEnvVars: true,
+    value: settings.stripePublishableKey,
+}) }}
+
+{{ forms.autosuggestField({
+    disabled: readOnly,
+    label: 'Webhook Signing Secret'|t('headcount'),
+    instructions: 'Webhook signing secret (starts with whsec_). Supports environment variables.'|t('headcount'),
+    name: 'stripeWebhookSecret',
+    suggestEnvVars: true,
+    value: settings.stripeWebhookSecret,
+}) }}

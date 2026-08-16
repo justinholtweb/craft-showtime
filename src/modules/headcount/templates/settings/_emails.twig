@@ -1,0 +1,68 @@
+{% import '_includes/forms' as forms %}
+{% set readOnly = readOnly ?? false %}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Welcome Email'|t('headcount'),
+    instructions: 'Send when a new subscription is created.'|t('headcount'),
+    name: 'sendWelcomeEmail',
+    on: settings.sendWelcomeEmail,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Payment Receipt'|t('headcount'),
+    instructions: 'Send when a payment is successfully processed.'|t('headcount'),
+    name: 'sendPaymentReceiptEmail',
+    on: settings.sendPaymentReceiptEmail,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Payment Failed'|t('headcount'),
+    instructions: 'Send when a payment fails.'|t('headcount'),
+    name: 'sendPaymentFailedEmail',
+    on: settings.sendPaymentFailedEmail,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Expiration Reminder'|t('headcount'),
+    instructions: 'Send before a membership expires. Run `headcount/subscriptions/remind` daily for this to go out.'|t('headcount'),
+    name: 'sendExpirationReminderEmail',
+    on: settings.sendExpirationReminderEmail,
+}) }}
+
+{{ forms.textField({
+    disabled: readOnly,
+    label: 'Reminder Days Before'|t('headcount'),
+    name: 'expirationReminderDays',
+    value: settings.expirationReminderDays,
+    type: 'number',
+    min: 1,
+    size: 5,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Trial Ending'|t('headcount'),
+    instructions: 'Send when a trial is about to end.'|t('headcount'),
+    name: 'sendTrialEndingEmail',
+    on: settings.sendTrialEndingEmail,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Cancellation Confirmation'|t('headcount'),
+    instructions: 'Send when a subscription is canceled.'|t('headcount'),
+    name: 'sendCancellationEmail',
+    on: settings.sendCancellationEmail,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Drip Content Unlocked'|t('headcount'),
+    instructions: 'Send when new drip content becomes available.'|t('headcount'),
+    name: 'sendDripUnlockedEmail',
+    on: settings.sendDripUnlockedEmail,
+}) }}

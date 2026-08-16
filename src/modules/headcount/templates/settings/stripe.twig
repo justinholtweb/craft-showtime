@@ -1,43 +1,30 @@
 {% extends '_layouts/cp' %}
-{% import '_includes/forms' as forms %}
 
-{% set title = 'Stripe Settings'|t('headcount') %}
+{% set title = 'Stripe'|t('headcount') %}
 {% set selectedSubnavItem = 'settings' %}
-{% set fullPageForm = true %}
+{#
+  Read-only when `allowAdminChanges` is off. The save action already refuses in that case
+  (SettingsController::beforeAction), so this is about not offering an edit that will be
+  rejected: no form, no save button, disabled inputs, and Craft's standard notice saying why.
+#}
+{% set readOnly = readOnly ?? false %}
+{% set fullPageForm = not readOnly %}
+
+{% if readOnly %}
+    {% set contentNotice = readOnlyNotice() %}
+{% endif %}
+
+{% block sidebar %}
+    {% include 'headcount/settings/_sidebar' with { selected: 'stripe' } only %}
+{% endblock %}
 
 {% block content %}
-    <input type="hidden" name="action" value="headcount/settings/save">
-    {{ csrfInput() }}
+    {% if not readOnly %}
+        <input type="hidden" name="action" value="headcount/settings/save">
+        {{ csrfInput() }}
+    {% endif %}
 
-    {{ forms.lightswitchField({
-        label: 'Enable Stripe'|t('headcount'),
-        name: 'stripeEnabled',
-        on: settings.stripeEnabled,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Secret Key'|t('headcount'),
-        instructions: 'Your Stripe secret key (starts with sk_). Supports environment variables.'|t('headcount'),
-        name: 'stripeSecretKey',
-        suggestEnvVars: true,
-        value: settings.stripeSecretKey,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Publishable Key'|t('headcount'),
-        instructions: 'Your Stripe publishable key (starts with pk_). Supports environment variables.'|t('headcount'),
-        name: 'stripePublishableKey',
-        suggestEnvVars: true,
-        value: settings.stripePublishableKey,
-    }) }}
-
-    {{ forms.autosuggestField({
-        label: 'Webhook Signing Secret'|t('headcount'),
-        instructions: 'Webhook signing secret (starts with whsec_). Supports environment variables.'|t('headcount'),
-        name: 'stripeWebhookSecret',
-        suggestEnvVars: true,
-        value: settings.stripeWebhookSecret,
-    }) }}
+    {% include 'headcount/settings/_stripe' %}
 
     <hr>
 

@@ -10,13 +10,18 @@ use yii\web\Response;
 class SettingsController extends Controller
 {
     /**
+     * The actions that only display settings. Everything else is assumed to change them.
+     */
+    private const READ_ONLY_ACTIONS = ['index', 'stripe', 'paypal', 'wallet', 'api', 'emails'];
+
+    /**
      * Every action here either displays or writes gateway credentials — Stripe and PayPal
      * secrets, the webhook signing secret, and the REST API key — so the whole controller
      * is admin-only, matching Craft's own plugin settings screens. Without this, any user
      * who can log into the control panel (an author, say) could read the Stripe secret key
      * or POST a new one.
      *
-     * Viewing stays available when `allowAdminChanges` is off; saving does not.
+     * Viewing stays available when `allowAdminChanges` is off; anything that writes does not.
      */
     public function beforeAction($action): bool
     {
@@ -24,44 +29,64 @@ class SettingsController extends Controller
             return false;
         }
 
-        $this->requireAdmin($action->id === 'save');
+        // Listed by what may be *read*, so anything added later is treated as a write until
+        // it says otherwise. Naming the one write action instead would silently let the next
+        // one through in an environment that forbids administrative changes.
+        $this->requireAdmin(!in_array($action->id, self::READ_ONLY_ACTIONS, true));
 
         return true;
     }
 
+    /**
+     * Whether this environment forbids administrative changes.
+     *
+     * `beforeAction()` already refuses to *save* in that case. This is what lets each screen
+     * say so up front rather than accepting input it will then reject.
+     */
+    private function isReadOnly(): bool
+    {
+        return !Craft::$app->getConfig()->getGeneral()->allowAdminChanges;
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     */
+    private function screen(string $template, array $variables = []): Response
+    {
+        return $this->renderTemplate($template, $variables + [
+            'settings' => Headcount::getInstance()->getSettings(),
+            'readOnly' => $this->isReadOnly(),
+        ]);
+    }
+
     public function actionIndex(): Response
     {
-        return $this->renderTemplate('headcount/settings/index', [
-            'settings' => Headcount::getInstance()->getSettings(),
-        ]);
+        return $this->screen('headcount/settings/index');
     }
 
     public function actionStripe(): Response
     {
-        return $this->renderTemplate('headcount/settings/stripe', [
-            'settings' => Headcount::getInstance()->getSettings(),
-        ]);
+        return $this->screen('headcount/settings/stripe');
     }
 
     public function actionPaypal(): Response
     {
-        return $this->renderTemplate('headcount/settings/paypal', [
-            'settings' => Headcount::getInstance()->getSettings(),
-        ]);
+        return $this->screen('headcount/settings/paypal');
     }
 
     public function actionWallet(): Response
     {
-        return $this->renderTemplate('headcount/settings/wallet', [
-            'settings' => Headcount::getInstance()->getSettings(),
-        ]);
+        return $this->screen('headcount/settings/wallet');
+    }
+
+    public function actionApi(): Response
+    {
+        return $this->screen('headcount/settings/api');
     }
 
     public function actionEmails(): Response
     {
-        return $this->renderTemplate('headcount/settings/emails', [
-            'settings' => Headcount::getInstance()->getSettings(),
-        ]);
+        return $this->screen('headcount/settings/emails');
     }
 
     public function actionSave(): ?Response
@@ -88,6 +113,7 @@ class SettingsController extends Controller
         $settings->checkoutCancelUrl = $request->getBodyParam('checkoutCancelUrl', $settings->checkoutCancelUrl);
         $settings->loginUrl = $request->getBodyParam('loginUrl', $settings->loginUrl);
         $settings->pricingUrl = $request->getBodyParam('pricingUrl', $settings->pricingUrl);
+        $settings->enforceAccessRules = (bool)$request->getBodyParam('enforceAccessRules', $settings->enforceAccessRules);
 
         $settings->sendWelcomeEmail = (bool)$request->getBodyParam('sendWelcomeEmail', $settings->sendWelcomeEmail);
         $settings->sendPaymentReceiptEmail = (bool)$request->getBodyParam('sendPaymentReceiptEmail', $settings->sendPaymentReceiptEmail);

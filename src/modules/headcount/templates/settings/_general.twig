@@ -1,0 +1,52 @@
+{% import '_includes/forms' as forms %}
+{% set readOnly = readOnly ?? false %}
+
+{{ forms.textField({
+    disabled: readOnly,
+    label: 'Default Currency'|t('headcount'),
+    instructions: 'Three-letter currency code (e.g., USD, EUR, GBP).'|t('headcount'),
+    name: 'defaultCurrency',
+    value: settings.defaultCurrency,
+    size: 3,
+    maxlength: 3,
+}) }}
+
+{{ forms.textField({
+    disabled: readOnly,
+    label: 'Checkout Success URL'|t('headcount'),
+    instructions: 'Relative URL to redirect after successful checkout.'|t('headcount'),
+    name: 'checkoutSuccessUrl',
+    value: settings.checkoutSuccessUrl,
+}) }}
+
+{{ forms.textField({
+    disabled: readOnly,
+    label: 'Checkout Cancel URL'|t('headcount'),
+    instructions: 'Relative URL to redirect when checkout is canceled.'|t('headcount'),
+    name: 'checkoutCancelUrl',
+    value: settings.checkoutCancelUrl,
+}) }}
+
+{{ forms.textField({
+    disabled: readOnly,
+    label: 'Login URL'|t('headcount'),
+    instructions: 'Relative URL of your login page.'|t('headcount'),
+    name: 'loginUrl',
+    value: settings.loginUrl,
+}) }}
+
+{{ forms.textField({
+    disabled: readOnly,
+    label: 'Pricing Page URL'|t('headcount'),
+    instructions: 'Relative URL of your pricing/plans page.'|t('headcount'),
+    name: 'pricingUrl',
+    value: settings.pricingUrl,
+}) }}
+
+{{ forms.lightswitchField({
+    disabled: readOnly,
+    label: 'Enforce Access Rules'|t('headcount'),
+    instructions: 'Apply access rules to front-end requests automatically. Turn this off if your templates already gate content themselves via `craft.headcount.canAccess()` — rules still evaluate, but nothing gets blocked for you.'|t('headcount'),
+    name: 'enforceAccessRules',
+    on: settings.enforceAccessRules,
+}) }}

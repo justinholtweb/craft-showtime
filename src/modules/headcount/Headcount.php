@@ -311,7 +311,7 @@ class Headcount extends Plugin
     protected function settingsHtml(): ?string
     {
         return Craft::$app->getView()->renderTemplate(
-            'headcount/settings/index',
+            'headcount/settings/_fields',
             ['settings' => $this->getSettings()]
         );
     }
@@ -372,6 +372,7 @@ class Headcount extends Plugin
                 $event->rules['headcount/settings/paypal'] = 'headcount/settings/paypal';
                 $event->rules['headcount/settings/emails'] = 'headcount/settings/emails';
                 $event->rules['headcount/settings/wallet'] = 'headcount/settings/wallet';
+                $event->rules['headcount/settings/api'] = 'headcount/settings/api';
             }
         );
     }
