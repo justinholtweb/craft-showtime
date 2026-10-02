@@ -207,7 +207,7 @@ class Wallet extends Component
             'serialNumber' => $this->getSerialNumber($subscription),
             'memberName' => $name ?: Craft::t('headcount', 'Member'),
             'memberSince' => $subscription->startDate,
-            'planName' => $plan?->name ?? Craft::t('headcount', 'Membership'),
+            'planName' => $plan->name ?? Craft::t('headcount', 'Membership'),
             'organizationName' => App::parseEnv($settings->walletOrganizationName)
                 ?: Craft::$app->getSystemName(),
             'expiryDate' => $subscription->endDate,

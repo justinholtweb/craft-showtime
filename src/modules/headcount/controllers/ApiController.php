@@ -7,6 +7,7 @@ use craft\elements\User;
 use craft\web\Controller;
 use justinholtweb\headcount\elements\Subscription;
 use justinholtweb\headcount\Headcount;
+use justinholtweb\headcount\models\Settings;
 use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
 
@@ -270,11 +271,14 @@ class ApiController extends Controller
         // server access logs, browser history, and the Referer header of any outbound link
         // on the response. hash_equals() keeps the comparison constant-time so the key
         // can't be recovered a byte at a time.
-        $settings = Headcount::getInstance()->getSettings();
-        if ($settings->apiKey) {
+        //
+        // The setting may be an environment variable; one that does not resolve means no key
+        // is configured, never that its name is the key.
+        $key = Settings::secret(Headcount::getInstance()->getSettings()->apiKey);
+        if ($key !== '') {
             $apiKey = Craft::$app->getRequest()->getHeaders()->get('X-Headcount-Api-Key');
 
-            if (is_string($apiKey) && hash_equals($settings->apiKey, $apiKey)) {
+            if (is_string($apiKey) && hash_equals($key, $apiKey)) {
                 $this->authenticatedByKey = true;
                 return true;
             }

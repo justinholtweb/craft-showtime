@@ -1,5 +1,64 @@
 # Release Notes for Showtime
 
+## 5.3.2 - 2026-10-02
+
+Bundles Headcount 5.3.3.
+
+### Security
+
+- **PayPal webhooks are refused without a webhook ID.** Every PayPal webhook was accepted when
+  none was configured, so anyone who knew a subscription's `I-…` id could activate, suspend or
+  cancel it. Set the webhook ID PayPal shows for your endpoint; the settings screen warns until
+  you do. (Stripe webhooks were already safe here: the bundle's own Stripe routing refuses an
+  empty signing secret, and standalone Headcount now does too.)
+- **The Headcount API key and outgoing webhook secret resolve environment variables.** The
+  settings fields suggested `$ENV_VAR` values but used them as typed, so `$HEADCOUNT_API_KEY`
+  made that literal, guessable string the key — enough to read any member's details. A variable
+  that doesn't resolve now counts as unset.
+- **The billing portal only returns members to this site**, rather than to any `returnUrl` in
+  the link.
+- **The anonymous Apple Wallet log endpoint is bounded** per request and per address.
+
+### Fixed
+
+- **The memberships index returned HTTP 500 whenever the status column was shown.** The
+  bundled copy of Headcount still had the string status colours that Headcount 5.3.2 replaced
+  with `craft\enums\Color` cases. The module is now in step with Headcount 5.3.3 —
+  `bin/sync-modules.sh` keeps the copies identical, and the two have to move together.
+
+## 5.3.1 - 2026-08-26
+
+### Fixed
+
+- **The events index showed no event names.** Showtime carries its own copy of Owl's source under
+  `src/modules/owl`, and that copy's `defineDefaultTableAttributes()` omitted `title` — so the
+  screen listed a calendar name and two dates per row and never said which event each row was.
+  Fixed here and in craft-owl 5.2.1; the two copies have to be kept in step.
+
+## 5.3.0 - 2026-08-16
+
+Bundles Stub 5.7.0.
+
+### Added
+
+- Picks up Stub's **frontend service filtering**. `craft.stub.services()` and
+  `craft.stub.bookingForm()` now take an optional filter, so a page can offer one provider's
+  services rather than every service on the site — `craft.stub.bookingForm({ user: currentUser })`
+  for a provider's own booking page, `{ handle: 'consultation' }` for a page built around a
+  single service. Filter by service `id`/`handle`, by `provider` (ID, handle or model), or by
+  `user` — the Craft user a provider is linked to.
+- A filtered booking form drops the steps a filter has already answered: one service skips
+  "select a service", one provider skips the provider step and opens on the calendar. The
+  progress bar and Back buttons follow.
+- `craft.stub.service(idOrHandle)` and `craft.stub.provider(idOrHandleOrUser)`.
+
+### Notes
+
+- Filtering is a display concern. Stub's booking endpoints are anonymous and take a service
+  ID from the request, so a filtered list narrows what a visitor sees, not what they may do.
+- Nothing changes for a template that calls `craft.stub.services()` or
+  `craft.stub.bookingForm()` with no arguments.
+
 ## 5.2.1 - 2026-08-15
 
 Bundles Headcount 5.3.1.

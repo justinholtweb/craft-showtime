@@ -33,6 +33,13 @@
             this.availableDates = [];
             this.csrfToken = this.el.dataset.csrf || '';
             this.stripeKey = this.el.dataset.stripeKey || '';
+
+            // A filtered form (see `craft.stub.bookingForm()`) can arrive with the service
+            // and/or the provider already decided. Those steps are still in the DOM — step
+            // index is DOM order — but they are skipped over in both directions.
+            this.skipService = this.el.dataset.skipService === '1';
+            this.pinnedProviderId = parseInt(this.el.dataset.providerId, 10) || null;
+            this.pinnedProviderName = this.el.dataset.providerName || '';
             this.stripe = null;
             this.stripeElements = null;
 
@@ -41,7 +48,57 @@
 
         init() {
             this.bindServiceCards();
+            this.updateBackButtons();
+            this.applyPinnedSelections();
             this.updateProgress();
+        }
+
+        /**
+         * Jump past whatever the template already decided. Runs before the first paint's
+         * worth of interaction, and the entry step is already marked active server-side, so
+         * there is no flash of a step the visitor never gets to use.
+         */
+        applyPinnedSelections() {
+            if (this.pinnedProviderId) {
+                this.data.providerId = this.pinnedProviderId;
+                this.data.providerName = this.pinnedProviderName;
+            }
+
+            if (!this.skipService) return;
+
+            const card = this.el.querySelector('.stub-service-card');
+            if (!card) return;
+
+            this.selectService(card);
+            this.advanceFromService();
+        }
+
+        isStepSkipped(step) {
+            if (step === 0) return this.skipService;
+            if (step === 1) return !!this.pinnedProviderId;
+            return false;
+        }
+
+        /** The nearest earlier step a visitor can actually go back to, or -1 if there is none. */
+        previousStep(from) {
+            let step = from - 1;
+            while (step >= 0 && this.isStepSkipped(step)) step--;
+            return step;
+        }
+
+        /** Hide the Back button on any step with nothing behind it. */
+        updateBackButtons() {
+            this.el.querySelectorAll('.stub-step').forEach((stepEl, i) => {
+                const btn = stepEl.querySelector('[data-stub-action="prev"]');
+                if (btn) btn.hidden = this.previousStep(i) < 0;
+
+                // The provider step's only control is Back, so hide the whole bar rather
+                // than leaving an empty strip of margin behind.
+                const actions = stepEl.querySelector('.stub-actions');
+                if (actions) {
+                    actions.hidden = [...actions.querySelectorAll('.stub-btn')].every(b => b.hidden);
+                }
+            });
         }
 
         // Navigation
@@ -58,14 +115,19 @@
         }
 
         prevStep() {
-            if (this.currentStep > 0) {
-                this.goToStep(this.currentStep - 1);
+            const step = this.previousStep(this.currentStep);
+            if (step >= 0) {
+                this.goToStep(step);
             }
         }
 
         updateProgress() {
+            // Dots carry the step they stand for, since a filtered form renders fewer of
+            // them than there are steps. Position is the fallback for an overridden
+            // template that predates the attribute.
             this.el.querySelectorAll('.stub-progress-step').forEach((s, i) => {
-                s.classList.toggle('active', i <= this.currentStep);
+                const step = s.dataset.step !== undefined ? parseInt(s.dataset.step, 10) : i;
+                s.classList.toggle('active', step <= this.currentStep);
             });
         }
 
@@ -73,21 +135,36 @@
         bindServiceCards() {
             this.el.querySelectorAll('.stub-service-card').forEach(card => {
                 card.addEventListener('click', () => {
-                    this.el.querySelectorAll('.stub-service-card').forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    this.data.serviceId = parseInt(card.dataset.id);
-                    this.data.serviceName = card.dataset.name;
-                    this.data.serviceDuration = parseInt(card.dataset.duration);
-                    this.data.servicePrice = parseFloat(card.dataset.price);
-                    this.data.serviceCurrency = card.dataset.currency;
-                    this.loadProviders();
+                    this.selectService(card);
+                    this.advanceFromService();
                 });
             });
         }
 
+        selectService(card) {
+            this.el.querySelectorAll('.stub-service-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            this.data.serviceId = parseInt(card.dataset.id);
+            this.data.serviceName = card.dataset.name;
+            this.data.serviceDuration = parseInt(card.dataset.duration);
+            this.data.servicePrice = parseFloat(card.dataset.price);
+            this.data.serviceCurrency = card.dataset.currency;
+        }
+
+        advanceFromService() {
+            // A pinned provider is already known to offer every service the form is
+            // showing — the same filter produced both — so there is nothing to choose.
+            if (this.pinnedProviderId) {
+                this.loadCalendar();
+                return;
+            }
+
+            this.goToStep(1);
+            this.loadProviders();
+        }
+
         // Step 2: Providers
         async loadProviders() {
-            this.nextStep();
             const container = this.el.querySelector('#stub-providers');
             container.innerHTML = '<div class="stub-loading"><span class="stub-spinner"></span></div>';
 
@@ -134,7 +211,7 @@
 
         // Step 3: Date & Time
         async loadCalendar() {
-            this.nextStep();
+            this.goToStep(2);
             await this.renderCalendar();
         }
 

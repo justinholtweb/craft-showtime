@@ -33,4 +33,7 @@
     name: 'stripeWebhookSecret',
     suggestEnvVars: true,
     value: settings.stripeWebhookSecret,
+    warning: settings.stripeEnabled and not settings.secretIsSet('stripeWebhookSecret')
+        ? 'Stripe webhooks are refused until a signing secret is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from Stripe events.'|t('headcount')
+        : null,
 }) }}

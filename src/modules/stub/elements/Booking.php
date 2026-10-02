@@ -115,7 +115,7 @@ class Booking extends Element
         return $this->referenceNumber ?: "Booking #{$this->id}";
     }
 
-    protected static function defineSources(string $context = null): array
+    protected static function defineSources(?string $context = null): array
     {
         return [
             [
@@ -238,7 +238,7 @@ class Booking extends Element
             : null;
     }
 
-    protected static function defineActions(string $source = null): array
+    protected static function defineActions(?string $source = null): array
     {
         return [
             Delete::class,

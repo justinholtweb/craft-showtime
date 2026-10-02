@@ -179,11 +179,11 @@ class PerksController extends Controller
      */
     private function ticketOptions(): array
     {
-        return array_values(array_map(
+        return array_map(
             fn(int $id, string $name) => ['label' => $name, 'value' => $id],
             array_keys($this->ticketNames()),
             $this->ticketNames(),
-        ));
+        );
     }
 
     /**
@@ -191,10 +191,10 @@ class PerksController extends Controller
      */
     private function serviceOptions(): array
     {
-        return array_values(array_map(
+        return array_map(
             fn(int $id, string $name) => ['label' => $name, 'value' => $id],
             array_keys($this->serviceNames()),
             $this->serviceNames(),
-        ));
+        );
     }
 }

@@ -297,8 +297,22 @@
 
 .stub-actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 12px;
     margin-top: 24px;
+}
+
+/* Back sits left, everything else right — and a lone Continue still lands on the right
+   when Back is hidden, which `space-between` would not do. */
+.stub-actions [data-stub-action="prev"] {
+    margin-right: auto;
+}
+
+/* `.stub-btn` sets `display: inline-flex`, which outranks the user agent's rule for the
+   `hidden` attribute, so a hidden Back button would otherwise still show. */
+.stub-btn[hidden],
+.stub-actions[hidden] {
+    display: none;
 }
 
 /* Confirmation */
@@ -381,4 +395,11 @@
 
 @keyframes stub-spin {
     to { transform: rotate(360deg); }
+}
+
+/* Empty state — a filtered form with nothing to offer */
+.stub-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--stub-text-muted);
 }

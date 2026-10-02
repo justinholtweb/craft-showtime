@@ -121,7 +121,7 @@ class Event extends Element
         return new EventQuery(static::class);
     }
 
-    protected static function defineSources(string $context = null): array
+    protected static function defineSources(?string $context = null): array
     {
         $sources = [
             [
@@ -166,7 +166,9 @@ class Event extends Element
 
     protected static function defineDefaultTableAttributes(string $source): array
     {
-        return ['calendar', 'startDate', 'endDate', 'repeating'];
+        // Without `title` the index lists dates against a calendar name and never says which
+        // event each row is — the one column an events screen cannot do without.
+        return ['title', 'calendar', 'startDate', 'endDate', 'repeating'];
     }
 
     protected static function defineSearchableAttributes(): array

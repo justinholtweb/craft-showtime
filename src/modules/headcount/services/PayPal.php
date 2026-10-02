@@ -6,6 +6,7 @@ use Craft;
 use GuzzleHttp\Client;
 use justinholtweb\headcount\Headcount;
 use justinholtweb\headcount\models\Plan;
+use justinholtweb\headcount\models\Settings;
 use yii\base\Component;
 
 class PayPal extends Component
@@ -215,13 +216,15 @@ class PayPal extends Component
 
     public function verifyWebhook(string $payload, $headers): bool
     {
-        $settings = Headcount::getInstance()->getSettings();
-        $webhookId = Craft::parseEnv($settings->paypalWebhookId);
+        $webhookId = Settings::secret(Headcount::getInstance()->getSettings()->paypalWebhookId);
 
-        if (!$webhookId) {
-            // If no webhook ID configured, accept all (not recommended for production)
-            Craft::warning('PayPal webhook verification skipped: no webhook ID configured', 'headcount');
-            return true;
+        // Until 5.3.3 a missing webhook ID meant "accept everything", so anyone who knew a
+        // subscription's I-… id could activate, suspend or cancel it. Without the ID PayPal
+        // cannot vouch for the event, so nothing is accepted.
+        if ($webhookId === '') {
+            Craft::error('PayPal webhook refused: no webhook ID is configured, so it cannot be verified.', 'headcount');
+
+            return false;
         }
 
         try {

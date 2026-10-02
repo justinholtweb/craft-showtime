@@ -2,7 +2,7 @@
     "name": "justinholtweb/craft-showtime",
     "description": "Showtime \u2014 events, bookings, and memberships for Craft CMS in one plugin",
     "type": "craft-plugin",
-    "version": "5.2.1",
+    "version": "5.3.2",
     "keywords": [
         "craft",
         "cms",
@@ -36,7 +36,8 @@
     "require-dev": {
         "craftcms/ecs": "dev-main",
         "craftcms/phpstan": "dev-main",
-        "craftcms/commerce": "^5.0"
+        "craftcms/commerce": "^5.0",
+        "phpstan/phpstan": "^1.12 || ^2.2"
     },
     "suggest": {
         "craftcms/commerce": "Required for Owl's Commerce ticketing features (^5.0)."

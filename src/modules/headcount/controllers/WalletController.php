@@ -26,6 +26,10 @@ use yii\web\Response;
  */
 class WalletController extends Controller
 {
+    private const LOG_LINES_PER_REQUEST = 10;
+    private const LOG_LINE_LENGTH = 500;
+    private const LOG_REQUESTS_PER_MINUTE = 10;
+
     /**
      * The device endpoints have no session to authenticate with — iOS presents the pass's
      * own authentication token in an `Authorization` header instead, which each action
@@ -286,10 +290,19 @@ class WalletController extends Controller
      */
     public function actionLog(): Response
     {
-        $body = json_decode((string)Craft::$app->getRequest()->getRawBody(), true);
+        // Anyone can post here, so what it can write to the log is bounded: a few short lines per
+        // request, and a few requests per address per minute. Apple sends a handful of lines
+        // when something on a device goes wrong, nowhere near either limit.
+        if (!$this->withinLogBudget()) {
+            return $this->statusOnly(200);
+        }
 
-        foreach ($body['logs'] ?? [] as $line) {
-            Craft::warning('Apple Wallet: ' . (is_string($line) ? $line : json_encode($line)), 'headcount');
+        $body = json_decode((string)Craft::$app->getRequest()->getRawBody(), true);
+        $logs = is_array($body['logs'] ?? null) ? array_slice($body['logs'], 0, self::LOG_LINES_PER_REQUEST) : [];
+
+        foreach ($logs as $line) {
+            $text = is_string($line) ? $line : (string)json_encode($line);
+            Craft::warning('Apple Wallet: ' . mb_substr(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $text) ?? '', 0, self::LOG_LINE_LENGTH), 'headcount');
         }
 
         return $this->statusOnly(200);
@@ -350,5 +363,30 @@ class WalletController extends Controller
         $this->response->content = '';
 
         return $this->response;
+    }
+
+    /** Per-address, per-minute budget for the anonymous log endpoint, counted under a mutex. */
+    private function withinLogBudget(): bool
+    {
+        $key = sprintf('headcount:walletlog:%s:%d', sha1((string)Craft::$app->getRequest()->getUserIP()), intdiv(time(), 60));
+        $mutex = Craft::$app->getMutex();
+
+        if (!$mutex->acquire($key, 2)) {
+            return false;
+        }
+
+        try {
+            $count = (int)Craft::$app->getCache()->get($key);
+
+            if ($count >= self::LOG_REQUESTS_PER_MINUTE) {
+                return false;
+            }
+
+            Craft::$app->getCache()->set($key, $count + 1, 120);
+
+            return true;
+        } finally {
+            $mutex->release($key);
+        }
     }
 }

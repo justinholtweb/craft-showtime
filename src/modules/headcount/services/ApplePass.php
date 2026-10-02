@@ -136,6 +136,10 @@ class ApplePass extends Component
                     'label' => Craft::t('headcount', 'MEMBER'),
                     'value' => $card['memberName'],
                 ]],
+                // Apple wants JSON arrays here, and array_filter() keeps keys: drop anything but
+                // the last entry and the list becomes an object, which Wallet rejects. Today only
+                // the last entry is optional, so PHPStan calls this redundant — it's insurance.
+                // @phpstan-ignore arrayValues.list
                 'secondaryFields' => array_values(array_filter([
                     [
                         'key' => 'plan',
@@ -150,6 +154,7 @@ class ApplePass extends Component
                         'timeStyle' => 'PKDateStyleNone',
                     ] : null,
                 ])),
+                // @phpstan-ignore arrayValues.list
                 'auxiliaryFields' => array_values(array_filter([
                     [
                         'key' => 'status',

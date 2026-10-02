@@ -3,8 +3,10 @@
 namespace justinholtweb\headcount\services;
 
 use Craft;
+use craft\helpers\UrlHelper;
 use justinholtweb\headcount\Headcount;
 use justinholtweb\headcount\models\Plan;
+use justinholtweb\headcount\models\Settings;
 use Stripe\BillingPortal\Session as PortalSession;
 use Stripe\Checkout\Session as CheckoutSession;
 use Stripe\Coupon;
@@ -126,8 +128,43 @@ class Stripe extends Component
 
         return $this->getClient()->billingPortal->sessions->create([
             'customer' => $customerId,
-            'return_url' => $returnUrl ?? Craft::$app->getSites()->getCurrentSite()->getBaseUrl(),
+            'return_url' => $this->safeReturnUrl($returnUrl) ?? Craft::$app->getSites()->getCurrentSite()->getBaseUrl(),
         ]);
+    }
+
+    /**
+     * Where Stripe's "Return" button may send a member: this site, nowhere else.
+     *
+     * The return URL comes from the query string, so without this a link to the portal action
+     * with `?returnUrl=https://evil.example` sent a member through a genuine Stripe page and on
+     * to the attacker's. A path is made absolute against the site, because Stripe needs one.
+     */
+    public function safeReturnUrl(?string $returnUrl): ?string
+    {
+        $returnUrl = trim((string)$returnUrl);
+
+        if ($returnUrl === '') {
+            return null;
+        }
+
+        // `/path` is ours; `//host` and `/\host` are other sites wearing a path's clothes.
+        if (preg_match('~^/(?![/\\\\])~', $returnUrl)) {
+            return UrlHelper::siteUrl(ltrim($returnUrl, '/'));
+        }
+
+        $host = parse_url($returnUrl, PHP_URL_HOST);
+
+        if (!preg_match('~^https?://~i', $returnUrl) || !is_string($host)) {
+            return null;
+        }
+
+        foreach (Craft::$app->getSites()->getAllSites() as $site) {
+            if (strcasecmp((string)parse_url((string)$site->getBaseUrl(), PHP_URL_HOST), $host) === 0) {
+                return $returnUrl;
+            }
+        }
+
+        return null;
     }
 
     public function createProduct(Plan $plan): Product
@@ -220,8 +257,13 @@ class Stripe extends Component
 
     public function verifyWebhookSignature(string $payload, string $sigHeader): \Stripe\Event
     {
-        $settings = Headcount::getInstance()->getSettings();
-        $webhookSecret = Craft::parseEnv($settings->stripeWebhookSecret);
+        // With no secret, constructEvent() would check an HMAC keyed with '' — which anyone can
+        // compute — so an unset secret has to mean "accept nothing", not "accept everything".
+        $webhookSecret = Settings::secret(Headcount::getInstance()->getSettings()->stripeWebhookSecret);
+
+        if ($webhookSecret === '') {
+            throw new \UnexpectedValueException('No Stripe webhook signing secret is configured, so the webhook cannot be verified.');
+        }
 
         return Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
     }

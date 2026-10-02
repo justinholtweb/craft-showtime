@@ -8,6 +8,9 @@
     name: 'apiKey',
     suggestEnvVars: true,
     value: settings.apiKey,
+    warning: settings.apiKey and not settings.secretIsSet('apiKey')
+        ? 'This environment variable doesn’t resolve, so API-key access is off.'|t('headcount')
+        : null,
 }) }}
 
 {{ forms.textField({
@@ -25,4 +28,7 @@
     name: 'outgoingWebhookSecret',
     suggestEnvVars: true,
     value: settings.outgoingWebhookSecret,
+    warning: settings.outgoingWebhookSecret and not settings.secretIsSet('outgoingWebhookSecret')
+        ? 'This environment variable doesn’t resolve, so outgoing webhooks aren’t sent.'|t('headcount')
+        : null,
 }) }}

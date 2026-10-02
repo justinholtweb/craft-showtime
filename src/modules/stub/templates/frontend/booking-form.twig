@@ -3,48 +3,59 @@
 {% set csrfName = craft.app.config.general.csrfTokenName ?? 'CRAFT_CSRF_TOKEN' %}
 {% set csrfToken = craft.app.request.csrfToken %}
 
+{# A filtered form can arrive with the service and/or the provider already decided (see
+   `craft.stub.bookingForm()`). Those steps still render — the JS reads the pinned service
+   from its card, and keeping the six `.stub-step` divs keeps their DOM order equal to their
+   step index — but they are never navigated to, and they get no progress dot. #}
+{% set pinnedService = pinnedService ?? null %}
+{% set pinnedProvider = pinnedProvider ?? null %}
+{% set skippedSteps = (pinnedService ? [0] : [])|merge(pinnedProvider ? [1] : []) %}
+{% set entryStep = pinnedService ? (pinnedProvider ? 2 : 1) : 0 %}
+
 <div class="stub-booking-form"
      data-csrf="{{ csrfToken }}"
      data-stripe-key="{{ settings.stripePublishableKey }}"
-     data-require-phone="{{ settings.requirePhone ? '1' : '0' }}">
+     data-require-phone="{{ settings.requirePhone ? '1' : '0' }}"
+     data-skip-service="{{ pinnedService ? '1' : '0' }}"
+     {% if pinnedProvider %}
+         data-provider-id="{{ pinnedProvider.id }}"
+         data-provider-name="{{ pinnedProvider.name }}"
+     {% endif %}>
 
-    {# Progress bar #}
+    {# Progress bar — one dot per step that is actually in play #}
     <div class="stub-progress">
-        <div class="stub-progress-step active"></div>
-        <div class="stub-progress-step"></div>
-        <div class="stub-progress-step"></div>
-        <div class="stub-progress-step"></div>
-        <div class="stub-progress-step"></div>
-        <div class="stub-progress-step"></div>
+        {% for step in (0..5)|filter(step => step not in skippedSteps) %}
+            <div class="stub-progress-step" data-step="{{ step }}"></div>
+        {% endfor %}
     </div>
 
     {# Step 1: Select Service #}
-    <div class="stub-step active" data-step="0">
+    <div class="stub-step{{ entryStep == 0 ? ' active' }}" data-step="0">
         {% include 'stub/frontend/_steps/_service' %}
     </div>
 
     {# Step 2: Select Provider #}
-    <div class="stub-step" data-step="1">
+    <div class="stub-step{{ entryStep == 1 ? ' active' }}" data-step="1">
         {% include 'stub/frontend/_steps/_provider' %}
     </div>
 
     {# Step 3: Date & Time #}
-    <div class="stub-step" data-step="2">
+    <div class="stub-step{{ entryStep == 2 ? ' active' }}" data-step="2">
         {% include 'stub/frontend/_steps/_datetime' %}
     </div>
 
     {# Step 4: Customer Info #}
-    <div class="stub-step" data-step="3">
+    <div class="stub-step{{ entryStep == 3 ? ' active' }}" data-step="3">
         {% include 'stub/frontend/_steps/_info' %}
     </div>
 
     {# Step 5: Payment #}
-    <div class="stub-step" data-step="4">
+    <div class="stub-step{{ entryStep == 4 ? ' active' }}" data-step="4">
         {% include 'stub/frontend/_steps/_payment' %}
     </div>
 
     {# Step 6: Confirmation #}
-    <div class="stub-step" data-step="5">
+    <div class="stub-step{{ entryStep == 5 ? ' active' }}" data-step="5">
         {% include 'stub/frontend/_steps/_confirm' %}
     </div>
 </div>

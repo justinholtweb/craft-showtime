@@ -5,6 +5,8 @@ namespace justinholtweb\stub\services;
 use Craft;
 use craft\db\Query;
 use justinholtweb\stub\models\Service;
+use justinholtweb\stub\models\ServiceCriteria;
+use justinholtweb\stub\Plugin;
 use justinholtweb\stub\records\ServiceRecord;
 use yii\base\Component;
 
@@ -12,16 +14,87 @@ class Services extends Component
 {
     public function getAllServices(bool $includeDisabled = false): array
     {
-        $query = $this->_createQuery();
+        return $this->getServices(['includeDisabled' => $includeDisabled]);
+    }
 
-        if (!$includeDisabled) {
-            $query->where(['enabled' => true]);
+    /**
+     * Services matching a filter, in sort order.
+     *
+     * Accepts the loose hash templates pass to `craft.stub.services()` or a pre-built
+     * criteria object. See {@see ServiceCriteria} for the keys and for why an empty filter
+     * matches nothing rather than everything.
+     *
+     * This is a *display* filter. The booking endpoints are anonymous and take a service ID
+     * from the request, so narrowing the list a visitor sees does not stop a crafted POST
+     * from booking a service that was filtered out. Treat it as presentation, not access
+     * control.
+     *
+     * @param ServiceCriteria|array<string, mixed> $criteria
+     * @return Service[]
+     */
+    public function getServices(ServiceCriteria|array $criteria = []): array
+    {
+        if (is_array($criteria)) {
+            $criteria = ServiceCriteria::fromArray($criteria);
         }
 
-        $query->andWhere(['dateDeleted' => null])
-            ->orderBy(['sortOrder' => SORT_ASC]);
+        if ($criteria->matchesNothing) {
+            return [];
+        }
+
+        $query = $this->_createQuery()->where(['dateDeleted' => null]);
+
+        if (!$criteria->includeDisabled) {
+            $query->andWhere(['enabled' => true]);
+        }
+
+        if ($criteria->ids !== null) {
+            $query->andWhere(['id' => $criteria->ids]);
+        }
+
+        if ($criteria->handles !== null) {
+            $query->andWhere(['handle' => $criteria->handles]);
+        }
+
+        if ($criteria->hasProviderFilter()) {
+            $serviceIds = $this->_serviceIdsForProviders($criteria);
+
+            if (!$serviceIds) {
+                return [];
+            }
+
+            $query->andWhere(['id' => $serviceIds]);
+        }
+
+        $query->orderBy(['sortOrder' => SORT_ASC]);
 
         return array_map(fn($row) => $this->_createServiceFromRow($row), $query->all());
+    }
+
+    /**
+     * The service IDs offered by the providers a criteria narrows to.
+     *
+     * @return int[]
+     */
+    private function _serviceIdsForProviders(ServiceCriteria $criteria): array
+    {
+        $providerIds = Plugin::getInstance()->providers->getProviderIdsFor(
+            $criteria->providerIds,
+            $criteria->providerHandles,
+            $criteria->userIds,
+            $criteria->includeDisabled,
+        );
+
+        if (!$providerIds) {
+            return [];
+        }
+
+        return array_map('intval', (new Query())
+            ->select(['serviceId'])
+            ->distinct()
+            ->from('{{%stub_provider_services}}')
+            ->where(['providerId' => $providerIds])
+            ->column());
     }
 
     public function getServiceById(int $id): ?Service

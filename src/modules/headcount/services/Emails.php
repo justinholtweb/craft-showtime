@@ -89,7 +89,7 @@ class Emails extends Component
             'variables' => array_merge([
                 'firstName' => $user->firstName ?: ($user->username ?: Craft::t('headcount', 'Member')),
                 'email' => $user->email,
-                'planName' => $subscription->getPlan()?->name ?? '',
+                'planName' => $subscription->getPlan()->name ?? '',
                 'siteName' => Craft::$app->getSystemName(),
                 'siteUrl' => Craft::$app->getSites()->getPrimarySite()->getBaseUrl() ?? '',
                 'currency' => strtoupper($subscription->currency ?: 'USD'),

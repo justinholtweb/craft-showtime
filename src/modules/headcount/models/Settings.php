@@ -3,6 +3,7 @@
 namespace justinholtweb\headcount\models;
 
 use craft\base\Model;
+use craft\helpers\App;
 
 class Settings extends Model
 {
@@ -149,5 +150,27 @@ class Settings extends Model
             ], 'boolean'],
             [['expirationReminderDays'], 'integer', 'min' => 1],
         ];
+    }
+
+    /**
+     * A credential setting's real value: environment variables resolved, and anything that did
+     * not resolve treated as unset.
+     *
+     * The settings screens offer `$ENV_VAR` suggestions for every secret. Until 5.3.3 the API key
+     * and the outgoing webhook secret were compared as typed, so `$HEADCOUNT_API_KEY` made that
+     * literal — guessable — string the key. An env var that is missing comes back from
+     * `parseEnv()` unchanged, and that must not count as a secret either.
+     */
+    public static function secret(?string $value): string
+    {
+        $resolved = trim((string)App::parseEnv((string)$value));
+
+        return $resolved === '' || str_starts_with($resolved, '$') ? '' : $resolved;
+    }
+
+    /** Whether a credential setting resolves to something — for the settings screens' warnings. */
+    public function secretIsSet(string $attribute): bool
+    {
+        return property_exists($this, $attribute) && self::secret((string)$this->$attribute) !== '';
     }
 }

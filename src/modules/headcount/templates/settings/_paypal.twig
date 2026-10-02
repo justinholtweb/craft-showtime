@@ -39,4 +39,7 @@
     name: 'paypalWebhookId',
     suggestEnvVars: true,
     value: settings.paypalWebhookId,
+    warning: settings.paypalEnabled and not settings.secretIsSet('paypalWebhookId')
+        ? 'PayPal webhooks are refused until a webhook ID is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from PayPal events.'|t('headcount')
+        : null,
 }) }}

@@ -5,6 +5,7 @@ namespace justinholtweb\headcount\jobs;
 use Craft;
 use craft\queue\BaseJob;
 use justinholtweb\headcount\Headcount;
+use justinholtweb\headcount\models\Settings;
 
 /**
  * Delivers a signed outgoing webhook to the configured endpoint.
@@ -33,8 +34,18 @@ class SendOutgoingWebhook extends BaseJob
         ]);
 
         $signature = '';
-        if ($settings->outgoingWebhookSecret) {
-            $signature = hash_hmac('sha256', $payload, $settings->outgoingWebhookSecret);
+        if ($settings->outgoingWebhookSecret !== '') {
+            $secret = Settings::secret($settings->outgoingWebhookSecret);
+
+            // A secret was configured but doesn't resolve: sending unsigned — or signed with the
+            // variable's name — would hand the receiver something it can't trust. Don't send.
+            if ($secret === '') {
+                Craft::error("Outgoing webhook for {$this->event} not sent: the webhook secret is set but does not resolve.", 'headcount');
+
+                return;
+            }
+
+            $signature = hash_hmac('sha256', $payload, $secret);
         }
 
         try {

@@ -314,6 +314,7 @@ class TestController extends Controller
 
         $this->check(
             'settings model is Stub\'s own',
+            // @phpstan-ignore instanceof.alwaysTrue (a runtime assertion on the mounted instance, not a type check)
             $stub->getSettings() instanceof StubSettings,
         );
 
@@ -787,7 +788,7 @@ class TestController extends Controller
             $this->check(
                 'member is charged the discounted price (75, not 100)',
                 $memberBooking !== null && (float)$memberBooking->price === 75.0,
-                'got: ' . ($memberBooking?->price ?? 'no booking'),
+                'got: ' . ($memberBooking->price ?? 'no booking'),
             );
 
             $guestBooking = $this->probeBooking($stub, $service->id, $provider->id, $guest->id);
@@ -796,7 +797,7 @@ class TestController extends Controller
             $this->check(
                 'non-member pays full price (100)',
                 $guestBooking !== null && (float)$guestBooking->price === 100.0,
-                'got: ' . ($guestBooking?->price ?? 'no booking'),
+                'got: ' . ($guestBooking->price ?? 'no booking'),
             );
 
             // Now make it members-only and confirm a non-member is actually refused, not
@@ -810,7 +811,7 @@ class TestController extends Controller
             $this->check(
                 'members-only service refuses a non-member booking',
                 $refused === null || $refused->id === null,
-                'booking was created anyway: ' . ($refused?->id ?? '-'),
+                'booking was created anyway: ' . ($refused->id ?? '-'),
             );
 
             $stillAllowed = $this->probeBooking($stub, $service->id, $provider->id, $memberCustomer->id);
@@ -1484,6 +1485,7 @@ class TestController extends Controller
             // Registrations need Commerce; without it the section is empty, not broken.
             $this->check(
                 'ticket orders resolve (or are empty without Commerce)',
+                // @phpstan-ignore function.alreadyNarrowedType (a runtime assertion; the phpdoc type is what is being tested)
                 is_array($person->registrations),
             );
 

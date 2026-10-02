@@ -161,7 +161,7 @@ class Webhooks extends Component
             'gateway' => 'stripe',
             'gatewaySubscriptionId' => $stripeSubId,
             'gatewayCustomerId' => $session->customer ?? null,
-            'status' => $this->_mapStripeStatus($stripeSubscription?->status ?? 'active'),
+            'status' => $this->_mapStripeStatus($stripeSubscription->status ?? 'active'),
             'startDate' => $stripeSubscription
                 ? $stripeSubscription->current_period_start
                 : ($termStart ?: time()),

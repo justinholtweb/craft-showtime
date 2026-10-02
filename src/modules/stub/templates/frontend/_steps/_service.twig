@@ -17,5 +17,10 @@
                 <div class="stub-service-desc">{{ service.description }}</div>
             {% endif %}
         </div>
+    {% else %}
+        {# A filtered form can legitimately come up empty — an author with no services yet,
+           or a `{ user: currentUser }` filter on a logged-out request. Say so rather than
+           rendering an empty box with a progress bar above it. #}
+        <p class="stub-empty">{{ 'No services are available to book right now.'|t('stub') }}</p>
     {% endfor %}
 </div>

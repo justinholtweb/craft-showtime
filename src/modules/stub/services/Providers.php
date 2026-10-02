@@ -50,6 +50,92 @@ class Providers extends Component
         return $provider;
     }
 
+    /**
+     * Both of these hand off to `getProviderById()` rather than hydrating the row
+     * themselves, so a provider looked up by handle or user carries the same schedules,
+     * breaks, blocked dates and service IDs as one looked up by ID.
+     */
+    public function getProviderByHandle(string $handle): ?Provider
+    {
+        $id = (new Query())
+            ->select(['id'])
+            ->from('{{%stub_providers}}')
+            ->where(['handle' => $handle, 'dateDeleted' => null])
+            ->scalar();
+
+        return $id ? $this->getProviderById((int)$id) : null;
+    }
+
+    /**
+     * The provider linked to a Craft user, if there is one.
+     *
+     * `userId` is not unique in the schema, so a user could in principle be linked to more
+     * than one provider row. The lowest ID wins here, deterministically, rather than
+     * whichever the database felt like returning.
+     */
+    public function getProviderByUserId(int $userId): ?Provider
+    {
+        $id = (new Query())
+            ->select(['id'])
+            ->from('{{%stub_providers}}')
+            ->where(['userId' => $userId, 'dateDeleted' => null])
+            ->orderBy(['id' => SORT_ASC])
+            ->scalar();
+
+        return $id ? $this->getProviderById((int)$id) : null;
+    }
+
+    /**
+     * Resolve any mix of provider IDs, provider handles and Craft user IDs down to a
+     * deduplicated list of provider IDs.
+     *
+     * Soft-deleted providers never match. Disabled providers only match when
+     * `$includeDisabled` is set — a disabled provider is not taking bookings, so surfacing
+     * their services on the frontend by default would offer something unbookable.
+     *
+     * Every argument is nullable and null means "not filtering on this". Passing nothing but
+     * nulls returns an empty array, since there is no provider filter to resolve.
+     *
+     * @param int[]|null $ids
+     * @param string[]|null $handles
+     * @param int[]|null $userIds
+     * @return int[]
+     */
+    public function getProviderIdsFor(
+        ?array $ids = null,
+        ?array $handles = null,
+        ?array $userIds = null,
+        bool $includeDisabled = false,
+    ): array {
+        $conditions = [];
+
+        if ($ids) {
+            $conditions[] = ['id' => $ids];
+        }
+        if ($handles) {
+            $conditions[] = ['handle' => $handles];
+        }
+        if ($userIds) {
+            $conditions[] = ['userId' => $userIds];
+        }
+
+        if (!$conditions) {
+            return [];
+        }
+
+        $query = (new Query())
+            ->select(['id'])
+            ->from('{{%stub_providers}}')
+            ->where(['dateDeleted' => null])
+            ->andWhere(count($conditions) === 1 ? $conditions[0] : array_merge(['or'], $conditions));
+
+        if (!$includeDisabled) {
+            $query->andWhere(['enabled' => true]);
+        }
+
+        return array_map('intval', $query->column());
+    }
+
     public function getProvidersByServiceId(int $serviceId): array
     {
         $providerIds = (new Query())

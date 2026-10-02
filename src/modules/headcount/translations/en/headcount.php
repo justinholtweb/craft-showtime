@@ -54,4 +54,8 @@ return [
     'week' => 'week',
     'month' => 'month',
     'year' => 'year',
+    'Stripe webhooks are refused until a signing secret is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from Stripe events.' => 'Stripe webhooks are refused until a signing secret is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from Stripe events.',
+    'PayPal webhooks are refused until a webhook ID is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from PayPal events.' => 'PayPal webhooks are refused until a webhook ID is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from PayPal events.',
+    'This environment variable doesn’t resolve, so API-key access is off.' => 'This environment variable doesn’t resolve, so API-key access is off.',
+    'This environment variable doesn’t resolve, so outgoing webhooks aren’t sent.' => 'This environment variable doesn’t resolve, so outgoing webhooks aren’t sent.',
 ];
