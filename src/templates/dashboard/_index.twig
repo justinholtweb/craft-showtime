@@ -3,9 +3,19 @@
 {% set title = 'Showtime'|t('showtime') %}
 {% set selectedSubnavItem = 'dashboard' %}
 
+{% css %}
+    .showtime-stats { display: flex; flex-wrap: wrap; gap: 14px; }
+    .showtime-stat {
+        display: block; flex: 1 1 160px; min-width: 160px; padding: 16px;
+        border: 1px solid var(--hairline-color); border-radius: var(--large-border-radius);
+        text-decoration: none;
+    }
+    .showtime-stat__value { font-size: 30px; line-height: 1.1; font-weight: 500; }
+{% endcss %}
+
 {% block content %}
     <div class="showtime-dashboard">
-        <div class="flex flex-nowrap" style="gap: 14px; flex-wrap: wrap;">
+        <div class="showtime-stats">
             {% if canViewBookings and stats.bookings %}
                 {% set b = stats.bookings %}
                 {{ _self.stat('Bookings today'|t('showtime'), b.todayCount, cpUrl('stub/calendar')) }}
@@ -77,8 +87,8 @@
 {% endblock %}
 
 {% macro stat(label, value, url) %}
-    <a href="{{ url }}" class="showtime-stat" style="display: block; flex: 1 1 160px; min-width: 160px; padding: 16px; border: 1px solid var(--hairline-color); border-radius: var(--large-border-radius); text-decoration: none;">
-        <div style="font-size: 30px; line-height: 1.1; font-weight: 500;">{{ value }}</div>
+    <a href="{{ url }}" class="showtime-stat">
+        <div class="showtime-stat__value">{{ value }}</div>
         <div class="light">{{ label }}</div>
     </a>
 {% endmacro %}

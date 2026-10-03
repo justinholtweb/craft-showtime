@@ -72,6 +72,39 @@ class Availability extends Component
     }
 
     /**
+     * Whether a booking may start at this moment: the provider is enabled and offers the service,
+     * and the start is one of the slots the booking form would offer — so the same schedule,
+     * breaks, blocked dates, buffers, capacity and minimum notice apply.
+     *
+     * The public booking endpoint used to trust whatever time and provider it was posted, so any
+     * moment — the past, a closed day, a full slot, a provider who doesn't offer the service — could
+     * be booked by posting it directly.
+     */
+    public function isBookable(int $serviceId, int $providerId, DateTime $startUtc): bool
+    {
+        $provider = Plugin::getInstance()->providers->getProviderById($providerId);
+
+        if ($provider === null || !$provider->enabled) {
+            return false;
+        }
+
+        if (!in_array($serviceId, array_map('intval', Plugin::getInstance()->providers->getServiceIdsForProvider($providerId)), true)) {
+            return false;
+        }
+
+        $start = (clone $startUtc)->setTimezone(new DateTimeZone('UTC'));
+        $providerDate = (clone $start)->setTimezone(new DateTimeZone($provider->timezone))->format('Y-m-d');
+
+        foreach ($this->getAvailableSlots($serviceId, $providerId, $providerDate, 'UTC') as $slot) {
+            if (($slot['time'] ?? null) === $start->format('H:i')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get available time slots for a specific date.
      *
      * @return array Array of ['time' => 'HH:MM', 'display' => 'h:mm A'] in customer timezone

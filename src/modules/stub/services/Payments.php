@@ -68,7 +68,16 @@ class Payments extends Component
     public function handleWebhookEvent(string $payload, string $sigHeader): bool
     {
         $settings = Plugin::getInstance()->getSettings();
-        $webhookSecret = App::parseEnv($settings->stripeWebhookSecret);
+        $webhookSecret = trim((string)App::parseEnv($settings->stripeWebhookSecret));
+
+        // Without a signing secret there is nothing to verify against: Stripe's library would
+        // happily check a signature made with an empty key, which anyone can produce, and a forged
+        // `payment_intent.succeeded` would mark a booking paid. Until 5.8.1 that is what happened.
+        if ($webhookSecret === '') {
+            Craft::error('Stripe webhook refused: no webhook signing secret is set in Stub’s settings.', __METHOD__);
+
+            return false;
+        }
 
         try {
             $event = Webhook::constructEvent($payload, $sigHeader, $webhookSecret);

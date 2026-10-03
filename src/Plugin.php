@@ -69,7 +69,7 @@ class Plugin extends BasePlugin
         'owl' => \justinholtweb\owl\Owl::class,
     ];
 
-    public string $schemaVersion = '1.1.0';
+    public string $schemaVersion = '1.1.1';
 
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
@@ -489,6 +489,15 @@ class Plugin extends BasePlugin
             OwlFeedController::EVENT_DEFINE_FEED_ITEMS,
             function(FeedItemsEvent $event) {
                 $this->gates->filterFeed($event);
+            }
+        );
+
+        // The ICS feeds are anonymous as well, and subscribed to: gated events leave them too.
+        Event::on(
+            \justinholtweb\owl\services\Ics::class,
+            \justinholtweb\owl\services\Ics::EVENT_DEFINE_ICS_ROWS,
+            function(\justinholtweb\owl\events\IcsRowsEvent $event) {
+                $this->gates->filterIcsRows($event);
             }
         );
 

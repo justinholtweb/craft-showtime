@@ -28,6 +28,12 @@ class FeedController extends Controller
      */
     public const EVENT_DEFINE_FEED_ITEMS = 'defineFeedItems';
 
+    /** The widest window `events.json` answers for; a longer request is cut to this. */
+    public const MAX_RANGE_DAYS = 400;
+
+    /** The most occurrences one `events.json` response holds. */
+    public const MAX_ROWS = 2000;
+
     protected array|bool|int $allowAnonymous = true;
 
     /**
@@ -40,11 +46,23 @@ class FeedController extends Controller
     {
         $request = Craft::$app->getRequest();
 
-        $rangeStart = DateTimeHelper::toDateTime($request->getParam('start')) ?: new DateTime('-1 year');
-        $rangeEnd = DateTimeHelper::toDateTime($request->getParam('end')) ?: new DateTime('+1 year');
+        $rangeStart = DateTimeHelper::toDateTime($request->getParam('start')) ?: new DateTime('-1 month');
+        $rangeEnd = DateTimeHelper::toDateTime($request->getParam('end')) ?: (clone $rangeStart)->modify('+' . self::MAX_RANGE_DAYS . ' days');
+
+        // The feed is anonymous: a window of a decade, or none at all, was one query returning
+        // every occurrence on the site. A year's view is the widest FullCalendar asks for.
+        if ($rangeEnd <= $rangeStart) {
+            return $this->asJson([]);
+        }
+
+        $maxEnd = (clone $rangeStart)->modify('+' . self::MAX_RANGE_DAYS . ' days');
+        if ($rangeEnd > $maxEnd) {
+            $rangeEnd = $maxEnd;
+        }
+
         $calendarIds = $this->resolveCalendarIds($request->getParam('calendar'));
 
-        $rows = Owl::getInstance()->occurrences->getOccurrencesInRange($rangeStart, $rangeEnd, null, $calendarIds);
+        $rows = Owl::getInstance()->occurrences->getOccurrencesInRange($rangeStart, $rangeEnd, null, $calendarIds, null, self::MAX_ROWS);
         $utc = new DateTimeZone('UTC');
 
         $events = [];
@@ -111,6 +129,10 @@ class FeedController extends Controller
         }
 
         $ics = Owl::getInstance()->ics->eventFeed($event);
+
+        if ($ics === null) {
+            throw new NotFoundHttpException('Event not found.');
+        }
 
         return $this->icsResponse($ics, 'event-' . $eventId);
     }

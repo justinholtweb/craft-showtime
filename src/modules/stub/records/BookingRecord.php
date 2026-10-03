@@ -23,6 +23,7 @@ use craft\db\ActiveRecord;
  * @property string|null $paidAt
  * @property string|null $cancelledAt
  * @property string|null $cancellationReason
+ * @property string|null $reminderSentAt
  */
 class BookingRecord extends ActiveRecord
 {

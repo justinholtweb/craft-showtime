@@ -21,14 +21,13 @@
     errors: settings.getErrors('defaultCurrency'),
 }) }}
 
-{{ forms.selectField({
+{{ forms.timeZoneField({
     label: 'Default Timezone'|t('stub'),
+    instructions: 'Used for new providers. Individual providers can override it.'|t('stub'),
     id: 'defaultTimezone',
     name: 'defaultTimezone',
     value: settings.defaultTimezone,
-    options: craft.app.i18n.allLocales|map(l => { label: l.displayName, value: l.id })|merge(
-        craft.app.timeZone ? [{ label: craft.app.timeZone, value: craft.app.timeZone }] : []
-    ),
+    required: true,
     errors: settings.getErrors('defaultTimezone'),
 }) }}
 
@@ -155,6 +154,7 @@
     name: 'stripeWebhookSecret',
     value: settings.stripeWebhookSecret,
     suggestEnvVars: true,
+    warning: settings.paymentEnabled and not parseEnv(settings.stripeWebhookSecret) ? 'Stripe webhooks are refused until this is set, so payments won’t be confirmed. Copy the signing secret from the webhook endpoint in your Stripe dashboard.'|t('stub'),
 }) }}
 
 <hr>
@@ -189,6 +189,44 @@
     id: 'sendCancellationEmail',
     name: 'sendCancellationEmail',
     on: settings.sendCancellationEmail,
+}) }}
+
+<h3>{{ 'Reminders'|t('stub') }}</h3>
+
+<p class="light">
+    {{ 'Reminders need a scheduled task — nothing sends them on its own. Add the following to your server’s crontab, then turn on the reminders you want:'|t('stub') }}
+</p>
+
+{# `@root` is the Craft install's base path — there is no rootPath on the Path service. #}
+<pre style="padding: 8px 10px; margin-bottom: 18px;"><code>0 * * * * {{ alias('@root') }}/craft stub/reminders/send</code></pre>
+
+{{ forms.lightswitchField({
+    label: 'Send Customer Reminder'|t('stub'),
+    instructions: 'Email the customer ahead of their appointment.'|t('stub'),
+    id: 'sendCustomerReminder',
+    name: 'sendCustomerReminder',
+    on: settings.sendCustomerReminder,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Send Provider & Admin Reminder'|t('stub'),
+    instructions: 'Send the same reminder to the provider’s own email address and to the admin address above.'|t('stub'),
+    id: 'sendInternalReminder',
+    name: 'sendInternalReminder',
+    on: settings.sendInternalReminder,
+}) }}
+
+{{ forms.textField({
+    label: 'Reminder Lead Time'|t('stub'),
+    instructions: 'How many hours before the appointment the reminder goes out.'|t('stub'),
+    id: 'reminderLeadTime',
+    name: 'reminderLeadTime',
+    value: settings.reminderLeadTime,
+    type: 'number',
+    min: 1,
+    max: 336,
+    size: 5,
+    errors: settings.getErrors('reminderLeadTime'),
 }) }}
 
 <hr>

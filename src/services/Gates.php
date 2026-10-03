@@ -118,6 +118,25 @@ class Gates extends Component
     }
 
     /**
+     * The same, for Owl's ICS feeds — a calendar's subscription feed and a single event's.
+     *
+     * Both are anonymous too, and calendar apps poll them, so before 5.3.4 a members-only event
+     * that was gone from the page and from `events.json` still appeared in every calendar
+     * subscribed to its calendar. A single event's feed with nothing left answers 404 (Owl).
+     */
+    public function filterIcsRows(\justinholtweb\owl\events\IcsRowsEvent $event): void
+    {
+        if (!$this->hasEventRules()) {
+            return;
+        }
+
+        $event->rows = array_values(array_filter(
+            $event->rows,
+            fn(array $row) => $this->canSeeEvent((int)($row['eventId'] ?? 0)),
+        ));
+    }
+
+    /**
      * Refuse a ticket for an event the buyer isn't allowed to see.
      *
      * Called on Commerce's add-to-cart path alongside the perks check. Without it, hiding an

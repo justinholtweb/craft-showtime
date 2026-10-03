@@ -1,0 +1,295 @@
+{% extends 'stub/_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'New Booking'|t('stub') %}
+{% set selectedSubnavItem = 'bookings' %}
+{% set crumbs = [{ label: 'Bookings'|t('stub'), url: cpUrl('stub/bookings') }] %}
+
+{% block content %}
+    {# No action attribute: the form posts to this URL, so a failed save can re-render
+       this page with the posted values via setRouteParams(). #}
+    <form method="post" accept-charset="UTF-8" id="stub-new-booking">
+        {{ csrfInput() }}
+        {{ actionInput('stub/bookings/create') }}
+
+        <div class="pane">
+            <h2>{{ 'Appointment'|t('stub') }}</h2>
+
+            {{ forms.selectField({
+                label: 'Service'|t('stub'),
+                id: 'serviceId',
+                name: 'serviceId',
+                value: values.serviceId,
+                required: true,
+                errors: errors.serviceId ?? null,
+                options: [{ label: 'Select a service'|t('stub'), value: '' }]|merge(
+                    services|map(s => {
+                        label: s.name ~ ' (' ~ s.duration ~ ' min)',
+                        value: s.id,
+                    })
+                ),
+            }) }}
+
+            {{ forms.selectField({
+                label: 'Provider'|t('stub'),
+                id: 'providerId',
+                name: 'providerId',
+                value: values.providerId,
+                required: true,
+                errors: errors.providerId ?? null,
+                options: [{ label: 'Select a provider'|t('stub'), value: '' }]|merge(
+                    providers|map(p => { label: p.name, value: p.id })
+                ),
+            }) }}
+
+            {{ forms.timeZoneField({
+                label: 'Timezone'|t('stub'),
+                instructions: 'The timezone the times below are entered in. It’s stored on the booking and used in the customer’s emails.'|t('stub'),
+                id: 'timezone',
+                name: 'timezone',
+                value: values.timezone,
+                errors: errors.timezone ?? null,
+            }) }}
+
+            {{ forms.textField({
+                label: 'Date'|t('stub'),
+                id: 'date',
+                name: 'date',
+                value: values.date,
+                type: 'date',
+                required: true,
+                errors: errors.date ?? null,
+            }) }}
+
+            <div id="slot-field" class="{{ values.overrideAvailability ? 'hidden' }}">
+                {{ forms.field({
+                    label: 'Time'|t('stub'),
+                    instructions: 'Available slots for the chosen service, provider and date.'|t('stub'),
+                    id: 'slot',
+                    errors: errors.slot ?? null,
+                }, '<select id="slot" name="slot" class="fullwidth"><option value="">' ~ 'Choose a service, provider and date'|t('stub') ~ '</option></select>') }}
+            </div>
+
+            <div id="time-field" class="{{ not values.overrideAvailability ? 'hidden' }}">
+                {{ forms.textField({
+                    label: 'Time'|t('stub'),
+                    instructions: 'Entered in the timezone above. Nothing is checked — this can double-book a provider or fall outside their hours.'|t('stub'),
+                    id: 'time',
+                    name: 'time',
+                    value: values.time,
+                    type: 'time',
+                    errors: errors.time ?? null,
+                }) }}
+            </div>
+
+            {{ forms.lightswitchField({
+                label: 'Override availability'|t('stub'),
+                instructions: 'Book any time at all — a walk-in, a double-booking, or a slot outside the provider’s schedule.'|t('stub'),
+                id: 'overrideAvailability',
+                name: 'overrideAvailability',
+                on: values.overrideAvailability,
+            }) }}
+        </div>
+
+        <div class="pane" style="margin-top: 24px;">
+            <h2>{{ 'Customer'|t('stub') }}</h2>
+
+            <p class="light">{{ 'An existing customer with this email address is reused; anyone new is created.'|t('stub') }}</p>
+
+            {{ forms.textField({
+                label: 'Email'|t('stub'),
+                id: 'email',
+                name: 'email',
+                value: values.email,
+                type: 'email',
+                required: true,
+                errors: errors.email ?? null,
+            }) }}
+
+            {{ forms.textField({
+                label: 'First Name'|t('stub'),
+                id: 'firstName',
+                name: 'firstName',
+                value: values.firstName,
+                required: true,
+                errors: errors.firstName ?? null,
+            }) }}
+
+            {{ forms.textField({
+                label: 'Last Name'|t('stub'),
+                id: 'lastName',
+                name: 'lastName',
+                value: values.lastName,
+                required: true,
+                errors: errors.lastName ?? null,
+            }) }}
+
+            {{ forms.textField({
+                label: 'Phone'|t('stub'),
+                id: 'phone',
+                name: 'phone',
+                value: values.phone,
+            }) }}
+
+            {{ forms.textareaField({
+                label: 'Customer Notes'|t('stub'),
+                id: 'customerNotes',
+                name: 'customerNotes',
+                value: values.customerNotes,
+                rows: 2,
+            }) }}
+        </div>
+
+        <div class="pane" style="margin-top: 24px;">
+            <h2>{{ 'Status'|t('stub') }}</h2>
+
+            {{ forms.selectField({
+                label: 'Booking Status'|t('stub'),
+                id: 'bookingStatus',
+                name: 'bookingStatus',
+                value: values.bookingStatus,
+                options: statuses|map(s => { label: s.label(), value: s.value }),
+            }) }}
+
+            {{ forms.selectField({
+                label: 'Payment Status'|t('stub'),
+                instructions: 'No payment is taken here. Mark it paid if you’ve already been paid.'|t('stub'),
+                id: 'paymentStatus',
+                name: 'paymentStatus',
+                value: values.paymentStatus,
+                options: paymentStatuses|map(s => { label: s.label(), value: s.value }),
+            }) }}
+
+            {{ forms.textareaField({
+                label: 'Admin Notes'|t('stub'),
+                id: 'adminNotes',
+                name: 'adminNotes',
+                value: values.adminNotes,
+                rows: 3,
+            }) }}
+
+            {{ forms.lightswitchField({
+                label: 'Send confirmation email'|t('stub'),
+                instructions: 'Email the customer their confirmation, as the booking form would. Requires Send Customer Confirmation in the plugin settings.'|t('stub'),
+                id: 'sendConfirmation',
+                name: 'sendConfirmation',
+                on: values.sendConfirmation,
+            }) }}
+        </div>
+
+        <div class="buttons" style="margin-top: 24px;">
+            <button type="submit" class="btn submit">{{ 'Create Booking'|t('stub') }}</button>
+            <a href="{{ cpUrl('stub/bookings') }}" class="btn">{{ 'Cancel'|t('stub') }}</a>
+        </div>
+    </form>
+
+    {% js %}
+        (function() {
+            var providerServices = {{ providerServiceIds|json_encode|raw }};
+            var selectedSlot = {{ values.slot|json_encode|raw }};
+
+            var $service = $('#serviceId');
+            var $provider = $('#providerId');
+            var $date = $('#date');
+            var $timezone = $('#timezone');
+            var $slot = $('#slot');
+            var $override = $('#overrideAvailability');
+
+            function isOverriding() {
+                return $('input[name="overrideAvailability"]').val() === '1';
+            }
+
+            // Providers that don't offer the chosen service are disabled rather than
+            // removed, so an override booking can still reach them.
+            function syncProviders() {
+                var serviceId = parseInt($service.val(), 10);
+                var overriding = isOverriding();
+
+                $provider.find('option').each(function() {
+                    var id = parseInt(this.value, 10);
+                    if (!id) {
+                        return;
+                    }
+                    var offers = !serviceId || (providerServices[id] || []).indexOf(serviceId) !== -1;
+                    this.disabled = !overriding && !offers;
+                });
+
+                if ($provider.find('option:selected').prop('disabled')) {
+                    $provider.val('');
+                }
+            }
+
+            function setSlotMessage(message) {
+                $slot.html($('<option>', { value: '', text: message }));
+            }
+
+            function loadSlots() {
+                if (isOverriding()) {
+                    return;
+                }
+
+                var serviceId = $service.val();
+                var providerId = $provider.val();
+                var date = $date.val();
+
+                if (!serviceId || !providerId || !date) {
+                    setSlotMessage(Craft.t('stub', 'Choose a service, provider and date'));
+                    return;
+                }
+
+                setSlotMessage(Craft.t('stub', 'Loading…'));
+
+                Craft.sendActionRequest('POST', 'stub/availability/get-slots', {
+                    data: {
+                        serviceId: serviceId,
+                        providerId: providerId,
+                        date: date,
+                        timezone: $timezone.val(),
+                    },
+                }).then(function(response) {
+                    var slots = response.data.slots || [];
+
+                    if (!slots.length) {
+                        setSlotMessage(Craft.t('stub', 'No slots available — turn on Override availability to book anyway'));
+                        return;
+                    }
+
+                    $slot.empty().append($('<option>', { value: '', text: Craft.t('stub', 'Select a time') }));
+
+                    slots.forEach(function(slot) {
+                        $slot.append($('<option>', { value: slot.utc, text: slot.display }));
+                    });
+
+                    if (selectedSlot) {
+                        $slot.val(selectedSlot);
+                        selectedSlot = null;
+                    }
+                }).catch(function() {
+                    setSlotMessage(Craft.t('stub', 'Couldn’t load available times'));
+                });
+            }
+
+            function syncMode() {
+                var overriding = isOverriding();
+                $('#slot-field').toggleClass('hidden', overriding);
+                $('#time-field').toggleClass('hidden', !overriding);
+                syncProviders();
+
+                if (!overriding) {
+                    loadSlots();
+                }
+            }
+
+            $service.on('change', function() {
+                syncProviders();
+                loadSlots();
+            });
+            $provider.on('change', loadSlots);
+            $date.on('change', loadSlots);
+            $timezone.on('change', loadSlots);
+            $override.on('change', syncMode);
+
+            syncMode();
+        })();
+    {% endjs %}
+{% endblock %}

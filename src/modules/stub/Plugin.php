@@ -21,6 +21,7 @@ use justinholtweb\stub\services\Customers;
 use justinholtweb\stub\services\Emails;
 use justinholtweb\stub\services\Payments;
 use justinholtweb\stub\services\Providers;
+use justinholtweb\stub\services\Reminders;
 use justinholtweb\stub\services\Services;
 use justinholtweb\stub\variables\StubVariable;
 use yii\base\Event;
@@ -37,12 +38,13 @@ use yii\base\Exception;
  * @property Currencies $currencies
  * @property Payments $payments
  * @property Emails $emails
+ * @property Reminders $reminders
  * @property Settings $settings
  * @method Settings getSettings()
  */
 class Plugin extends BasePlugin
 {
-    public string $schemaVersion = '1.0.0';
+    public string $schemaVersion = '1.1.0';
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
 
@@ -80,6 +82,7 @@ class Plugin extends BasePlugin
                 'currencies' => Currencies::class,
                 'payments' => Payments::class,
                 'emails' => Emails::class,
+                'reminders' => Reminders::class,
             ],
         ];
     }
@@ -203,6 +206,7 @@ class Plugin extends BasePlugin
                 $event->rules['stub/dashboard'] = 'stub/dashboard/index';
                 $event->rules['stub/calendar'] = 'stub/calendar/index';
                 $event->rules['stub/bookings'] = 'stub/bookings/index';
+                $event->rules['stub/bookings/new'] = 'stub/bookings/new';
                 $event->rules['stub/bookings/<bookingId:\d+>'] = 'stub/bookings/edit';
                 $event->rules['stub/services'] = 'stub/services/index';
                 $event->rules['stub/services/new'] = 'stub/services/edit';
@@ -310,6 +314,22 @@ class Plugin extends BasePlugin
                 'setting' => 'sendAdminNotification',
                 'subject' => Craft::t('stub', 'New booking: {{referenceNumber}}'),
                 'body' => Craft::t('stub', "A new booking has been created.\n\nReference: {{referenceNumber}}\nService: {{serviceName}}\nProvider: {{providerName}}\nCustomer: {{customerName}}\nDate: {{dateFormatted}} at {{timeFormatted}}"),
+            ],
+            'stub_booking_reminder' => [
+                'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],
+                'heading' => Craft::t('stub', 'Booking Reminder'),
+                'description' => Craft::t('stub', 'Sent to the customer ahead of their appointment. Requires the stub/reminders/send command on a schedule.'),
+                'setting' => 'sendCustomerReminder',
+                'subject' => Craft::t('stub', 'Reminder: {{serviceName}} on {{dateFormatted}}'),
+                'body' => Craft::t('stub', "Hi {{customerName}},\n\nThis is a reminder of your booking for {{serviceName}} with {{providerName}} on {{dateFormatted}} at {{timeFormatted}} ({{timezone}}).\n\nReference: {{referenceNumber}}\n\nWe look forward to seeing you."),
+            ],
+            'stub_booking_reminder_internal' => [
+                'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],
+                'heading' => Craft::t('stub', 'Booking Reminder (Provider & Admin)'),
+                'description' => Craft::t('stub', 'The same reminder, sent to the provider and the admin address.'),
+                'setting' => 'sendInternalReminder',
+                'subject' => Craft::t('stub', 'Upcoming booking: {{referenceNumber}} on {{dateFormatted}}'),
+                'body' => Craft::t('stub', "An upcoming booking.\n\nReference: {{referenceNumber}}\nService: {{serviceName}}\nProvider: {{providerName}}\nCustomer: {{customerName}} ({{customerEmail}})\nDate: {{dateFormatted}} at {{timeFormatted}} ({{timezone}})"),
             ],
             'stub_booking_cancellation' => [
                 'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],

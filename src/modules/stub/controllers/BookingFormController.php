@@ -52,7 +52,16 @@ class BookingFormController extends Controller
         }
 
         // Calculate end time
-        $startDt = new DateTime($startDateTimeUtc, new DateTimeZone('UTC'));
+        try {
+            $startDt = new DateTime((string)$startDateTimeUtc, new DateTimeZone('UTC'));
+        } catch (\Throwable) {
+            return $this->asJson(['success' => false, 'error' => 'Invalid start time.']);
+        }
+
+        if (!Plugin::getInstance()->availability->isBookable($serviceId, $providerId, $startDt)) {
+            return $this->asJson(['success' => false, 'error' => 'That time is no longer available. Please choose another.']);
+        }
+
         $endDt = clone $startDt;
         $endDt->modify("+{$service->duration} minutes");
 

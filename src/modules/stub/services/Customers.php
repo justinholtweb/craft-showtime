@@ -81,14 +81,25 @@ class Customers extends Component
         if ($existing) {
             $changed = false;
 
-            // Update name if changed
-            if ($existing->firstName !== $firstName || $existing->lastName !== $lastName) {
-                $existing->firstName = $firstName;
-                $existing->lastName = $lastName;
-                if ($phone) {
-                    $existing->phone = $phone;
+            // Only the customer may change their own details. A booking form takes any email, so an
+            // anonymous booking that names an existing customer's address may fill in what is
+            // missing, but never replace it — before 5.8.1 it renamed them and changed their phone.
+            if ($this->_isCurrentUser($existing)) {
+                if ($existing->firstName !== $firstName || $existing->lastName !== $lastName || ($phone && $existing->phone !== $phone)) {
+                    $existing->firstName = $firstName;
+                    $existing->lastName = $lastName;
+                    if ($phone) {
+                        $existing->phone = $phone;
+                    }
+                    $changed = true;
                 }
-                $changed = true;
+            } else {
+                foreach (['firstName' => $firstName, 'lastName' => $lastName, 'phone' => $phone] as $attribute => $value) {
+                    if (($existing->$attribute === null || $existing->$attribute === '') && $value) {
+                        $existing->$attribute = $value;
+                        $changed = true;
+                    }
+                }
             }
 
             // Someone who registered an account after their first booking should stop being
@@ -220,5 +231,24 @@ class Customers extends Component
             'dateUpdated' => $row['dateUpdated'],
             'uid' => $row['uid'],
         ]);
+    }
+
+    /**
+     * Whether the signed-in user is this customer — their linked account, or an account with the
+     * customer's email.
+     */
+    private function _isCurrentUser(Customer $customer): bool
+    {
+        if (Craft::$app->getRequest()->getIsConsoleRequest()) {
+            return false;
+        }
+
+        $user = Craft::$app->getUser()->getIdentity();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return $customer->userId ? (int)$customer->userId === (int)$user->id : strcasecmp((string)$user->email, (string)$customer->email) === 0;
     }
 }

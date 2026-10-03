@@ -8,6 +8,7 @@ use craft\base\Component;
 use craft\helpers\UrlHelper;
 use DateTimeImmutable;
 use DateTimeZone;
+use justinholtweb\owl\events\IcsRowsEvent;
 use justinholtweb\owl\ics\IcsBuilder;
 use justinholtweb\owl\models\Calendar;
 use justinholtweb\owl\Owl;
@@ -18,6 +19,12 @@ use justinholtweb\owl\recurrence\DisplayInstant;
  */
 class Ics extends Component
 {
+    /**
+     * @event IcsRowsEvent Before an ICS feed is built. Remove rows a visitor shouldn't see — the
+     * feeds are anonymous.
+     */
+    public const EVENT_DEFINE_ICS_ROWS = 'defineIcsRows';
+
     /**
      * A subscribable ICS feed of every materialised occurrence in a calendar.
      */
@@ -30,13 +37,16 @@ class Ics extends Component
             [$calendar->id],
         );
 
+        $rows = $this->filterRows($rows, calendar: $calendar);
+
         return (new IcsBuilder())->build($calendar->name, $this->rowsToEvents($rows));
     }
 
     /**
-     * An ICS document for a single event (all of its occurrences).
+     * An ICS document for a single event (all of its occurrences), or null when a handler has
+     * hidden every occurrence — an empty feed would still carry the event's title.
      */
-    public function eventFeed(\justinholtweb\owl\elements\Event $event): string
+    public function eventFeed(\justinholtweb\owl\elements\Event $event): ?string
     {
         $rows = Owl::getInstance()->occurrences->getOccurrencesInRange(
             $this->farPast(),
@@ -46,7 +56,29 @@ class Ics extends Component
             $event->id,
         );
 
-        return (new IcsBuilder())->build((string)$event->title, $this->rowsToEvents($rows));
+        $filtered = $this->filterRows($rows, event: $event);
+
+        if ($rows !== [] && $filtered === []) {
+            return null;
+        }
+
+        return (new IcsBuilder())->build((string)$event->title, $this->rowsToEvents($filtered));
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $rows
+     * @return array<int,array<string,mixed>>
+     */
+    private function filterRows(array $rows, ?Calendar $calendar = null, ?\justinholtweb\owl\elements\Event $event = null): array
+    {
+        if (!$this->hasEventHandlers(self::EVENT_DEFINE_ICS_ROWS)) {
+            return $rows;
+        }
+
+        $e = new IcsRowsEvent(['rows' => $rows, 'calendar' => $calendar, 'event' => $event]);
+        $this->trigger(self::EVENT_DEFINE_ICS_ROWS, $e);
+
+        return array_values($e->rows);
     }
 
     /**

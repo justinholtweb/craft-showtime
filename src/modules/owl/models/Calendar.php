@@ -49,6 +49,9 @@ class Calendar extends Model
             [['name', 'handle'], 'required'],
             [['name', 'handle', 'color', 'uriFormat', 'template'], 'string', 'max' => 255],
             [['handle'], HandleValidator::class],
+            // Drawn as an inline swatch in the CP and handed to the front-end calendar, so it has
+            // to be a colour and nothing else.
+            [['color'], \craft\validators\ColorValidator::class],
             [
                 ['handle'],
                 UniqueValidator::class,

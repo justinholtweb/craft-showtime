@@ -72,6 +72,46 @@ class Emails extends Component
         return true;
     }
 
+    /**
+     * The reminder for an upcoming booking: one copy to the customer, and one worded for
+     * the people running it — the provider, at the address on their own record, and the
+     * admin address.
+     *
+     * Each copy is governed by its own setting, and a provider whose email *is* the admin
+     * address gets one message rather than two.
+     *
+     * @return int how many messages actually went out
+     */
+    public function sendReminder(Booking $booking): int
+    {
+        $settings = Plugin::getInstance()->getSettings();
+        $vars = $this->_getEmailVariables($booking);
+        $sent = 0;
+
+        if ($settings->sendCustomerReminder) {
+            $customer = $booking->getCustomer();
+
+            if ($customer && $customer->email) {
+                $sent += (int)$this->_sendSystemEmail('stub_booking_reminder', $customer->email, $vars);
+            }
+        }
+
+        if ($settings->sendInternalReminder) {
+            $provider = $booking->getProvider();
+
+            $recipients = array_filter([
+                $provider->email ?? null,
+                $settings->adminEmail ?: null,
+            ]);
+
+            foreach (array_unique($recipients) as $recipient) {
+                $sent += (int)$this->_sendSystemEmail('stub_booking_reminder_internal', $recipient, $vars);
+            }
+        }
+
+        return $sent;
+    }
+
     private function _getEmailVariables(Booking $booking): array
     {
         $service = $booking->getService();

@@ -5,6 +5,7 @@ namespace justinholtweb\stub\elements;
 use Craft;
 use craft\base\Element;
 use craft\elements\actions\Delete;
+use craft\enums\Color;
 use craft\helpers\UrlHelper;
 use DateTime;
 use justinholtweb\stub\elements\db\BookingQuery;
@@ -33,6 +34,12 @@ class Booking extends Element
     public ?string $paidAt = null;
     public ?string $cancelledAt = null;
     public ?string $cancellationReason = null;
+
+    /**
+     * When the reminder for this booking went out, as a naive UTC string. Null means it
+     * hasn't — which is what stops the sweep sending a second copy on its next run.
+     */
+    public ?string $reminderSentAt = null;
 
     // Cached relations
     private ?object $_service = null;
@@ -67,11 +74,11 @@ class Booking extends Element
     public static function statuses(): array
     {
         return [
-            'pending' => ['label' => Craft::t('stub', 'Pending'), 'color' => 'orange'],
-            'confirmed' => ['label' => Craft::t('stub', 'Confirmed'), 'color' => 'green'],
-            'completed' => ['label' => Craft::t('stub', 'Completed'), 'color' => 'blue'],
-            'cancelled' => ['label' => Craft::t('stub', 'Cancelled'), 'color' => 'red'],
-            'noShow' => ['label' => Craft::t('stub', 'No Show'), 'color' => 'grey'],
+            'pending' => ['label' => Craft::t('stub', 'Pending'), 'color' => Color::Orange],
+            'confirmed' => ['label' => Craft::t('stub', 'Confirmed'), 'color' => Color::Green],
+            'completed' => ['label' => Craft::t('stub', 'Completed'), 'color' => Color::Blue],
+            'cancelled' => ['label' => Craft::t('stub', 'Cancelled'), 'color' => Color::Red],
+            'noShow' => ['label' => Craft::t('stub', 'No Show'), 'color' => Color::Gray],
         ];
     }
 
@@ -238,6 +245,13 @@ class Booking extends Element
             : null;
     }
 
+    public function getLocalReminderSentAt(): ?DateTime
+    {
+        return $this->reminderSentAt !== null
+            ? TimeHelper::convertFromUtc($this->reminderSentAt, $this->timezone)
+            : null;
+    }
+
     protected static function defineActions(?string $source = null): array
     {
         return [
@@ -274,6 +288,7 @@ class Booking extends Element
         $record->paidAt = $this->paidAt;
         $record->cancelledAt = $this->cancelledAt;
         $record->cancellationReason = $this->cancellationReason;
+        $record->reminderSentAt = $this->reminderSentAt;
 
         $record->save(false);
 

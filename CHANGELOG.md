@@ -1,5 +1,34 @@
 # Release Notes for Showtime
 
+## 5.3.4 - 2026-10-03
+
+Bundles Stub 5.8.1 and Owl 5.2.1. (The `5.3.3` tag marks the 5.3.2 release below; there is no
+separate 5.3.3.)
+
+### Security
+
+- **Members-only events no longer appear in the ICS feeds.** Gated events were already dropped
+  from the page and from `owl/events.json`, but a calendar's subscription feed and an event's own
+  `.ics` download had no gate, so every calendar app subscribed to the calendar still showed them.
+  Both feeds now drop what the visitor can't see, and a gated event's own feed is a 404.
+- **Stub: Stripe webhooks are refused without a signing secret** on Stub's own endpoint — the
+  bundle's Stripe routing already refused them.
+- **Stub: the public booking form checks the slot** — an enabled provider who offers the service,
+  at a time the form would offer. It accepted any time and provider it was posted.
+- **Stub: an anonymous booking can't rename an existing customer**, only fill in what's missing.
+- **Owl: `events.json` answers for at most 400 days and 2,000 occurrences**, and a calendar's
+  colour must be a colour.
+
+### Added
+
+- Stub's reminder emails and manual bookings (Stub 5.8.0), with a sync migration that brings an
+  existing install's mounted Stub up to them.
+
+### Fixed
+
+- The bundled Stub had drifted from the standalone plugin (17 files); it is now the same code.
+- The dashboard's stat cards use a stylesheet instead of inline styles.
+
 ## 5.3.2 - 2026-10-02
 
 Bundles Headcount 5.3.3.

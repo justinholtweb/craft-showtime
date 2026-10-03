@@ -13,3 +13,11 @@
 {% set elementDisplayName = 'Booking'|t('stub') %}
 {% set elementPluralDisplayName = 'Bookings'|t('stub') %}
 {% set sources = craft.app.elementSources.getSources(elementType, context) %}
+
+{# Viewing bookings and creating one are separate permissions, so the button only shows
+   for someone who could actually save the form it leads to. #}
+{% block actionButton %}
+    {% if currentUser.can('stub:manageBookings') %}
+        <a href="{{ cpUrl('stub/bookings/new') }}" class="btn submit add icon">{{ 'New Booking'|t('stub') }}</a>
+    {% endif %}
+{% endblock %}

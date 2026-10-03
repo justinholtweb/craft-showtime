@@ -64,6 +64,18 @@
                             </tr>
                         {% endif %}
                         <tr>
+                            <th>{{ 'Reminder'|t('stub') }}</th>
+                            <td>
+                                {% if booking.reminderSentAt %}
+                                    {{ 'Sent {date}'|t('stub', {
+                                        date: booking.localReminderSentAt|date('M j, Y g:i A', timezone=booking.timezone) ~ ' (' ~ booking.timezone ~ ')',
+                                    }) }}
+                                {% else %}
+                                    {{ 'Not sent'|t('stub') }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
                             <th>{{ 'Created'|t('stub') }}</th>
                             <td>{{ booking.dateCreated|date('M j, Y g:i A') }}</td>
                         </tr>
@@ -118,6 +130,30 @@
 
                     <button type="submit" class="btn submit">{{ 'Update'|t('stub') }}</button>
                 </form>
+            </div>
+            <div class="pane" style="margin-top: 24px;">
+                <h2>{{ 'Reminder'|t('stub') }}</h2>
+
+                {% if remindersEnabled and currentUser.can('stub:manageBookings') %}
+                    <p class="light">
+                        {{ 'Reminders normally go out {hours} hours before the appointment, from the scheduled stub/reminders/send command. Send this one now instead:'|t('stub', { hours: settings.reminderLeadTime }) }}
+                    </p>
+
+                    <form method="post">
+                        {{ csrfInput() }}
+                        {{ actionInput('stub/bookings/send-reminder') }}
+                        {{ hiddenInput('bookingId', booking.id) }}
+
+                        <button type="submit" class="btn">
+                            {{ booking.reminderSentAt ? 'Send Reminder Again'|t('stub') : 'Send Reminder Now'|t('stub') }}
+                        </button>
+                    </form>
+                {% elseif not remindersEnabled %}
+                    <p class="light">
+                        {{ 'Reminder emails are turned off.'|t('stub') }}
+                        <a href="{{ cpUrl('settings/plugins/stub') }}">{{ 'Plugin settings'|t('stub') }}</a>
+                    </p>
+                {% endif %}
             </div>
         </div>
     </div>

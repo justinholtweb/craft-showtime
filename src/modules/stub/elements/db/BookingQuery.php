@@ -107,6 +107,7 @@ class BookingQuery extends ElementQuery
             'stub_bookings.paidAt',
             'stub_bookings.cancelledAt',
             'stub_bookings.cancellationReason',
+            'stub_bookings.reminderSentAt',
         ]);
 
         if ($this->serviceId) {

@@ -248,7 +248,7 @@ class TestController extends Controller
 
     private function testIcsFeed(Event $event): void
     {
-        $ics = Owl::getInstance()->ics->eventFeed($event);
+        $ics = (string)Owl::getInstance()->ics->eventFeed($event);
         $this->assert(str_contains($ics, 'BEGIN:VCALENDAR'), 'ICS feed is a VCALENDAR');
         $this->assert(substr_count($ics, 'BEGIN:VEVENT') === 3, 'ICS feed has one VEVENT per occurrence');
     }

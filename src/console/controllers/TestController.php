@@ -1278,6 +1278,22 @@ class TestController extends Controller
                 in_array($openEvent->id, $remaining, true) && in_array('booking-1', $remaining, true),
                 'remaining: ' . implode(', ', $remaining),
             );
+
+            // The ICS feeds are anonymous and subscribed to by calendar apps — the same gate.
+            $ics = $owl->ics;
+            $gatedCalendarFeed = $ics->calendarFeed($gatedCalendar);
+            $this->check(
+                'the gated calendar’s ICS feed leaves the gated event out',
+                !str_contains($gatedCalendarFeed, 'Members-only probe') && str_contains($gatedCalendarFeed, 'BEGIN:VCALENDAR'),
+            );
+            $this->check(
+                'a gated event’s own ICS feed is withheld',
+                $ics->eventFeed($gatedEvent) === null,
+            );
+            $this->check(
+                'an open event’s ICS feed is served',
+                str_contains((string)$ics->eventFeed($openEvent), 'Open probe event'),
+            );
         } catch (\Throwable $e) {
             $this->check('gating scenario ran without error', false, $e->getMessage());
         } finally {

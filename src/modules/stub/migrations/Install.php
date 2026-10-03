@@ -207,6 +207,7 @@ class Install extends Migration
             'paidAt' => $this->dateTime(),
             'cancelledAt' => $this->dateTime(),
             'cancellationReason' => $this->text(),
+            'reminderSentAt' => $this->dateTime(),
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
             'uid' => $this->uid(),
@@ -221,6 +222,11 @@ class Install extends Migration
         $this->createIndex(null, '{{%stub_bookings}}', ['endDateTime']);
         $this->createIndex(null, '{{%stub_bookings}}', ['referenceNumber'], true);
         $this->createIndex(null, '{{%stub_bookings}}', ['paymentStatus']);
+
+        // The reminder sweep asks one question on every run — which confirmed bookings
+        // start soon and haven't been reminded yet — so it gets its own composite index
+        // rather than leaning on the single-column ones.
+        $this->createIndex(null, '{{%stub_bookings}}', ['bookingStatus', 'reminderSentAt', 'startDateTime']);
 
         $this->addForeignKey(null, '{{%stub_bookings}}', ['id'], '{{%elements}}', ['id'], 'CASCADE');
         $this->addForeignKey(null, '{{%stub_bookings}}', ['serviceId'], '{{%stub_services}}', ['id']);

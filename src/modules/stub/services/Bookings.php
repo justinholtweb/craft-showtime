@@ -24,6 +24,55 @@ class Bookings extends Component
 
     public function createBooking(array $attributes): Booking
     {
+        $booking = $this->_newBooking($attributes);
+
+        // Auto-confirm free bookings
+        $settings = Plugin::getInstance()->getSettings();
+        if ($booking->price <= 0 && $settings->autoConfirmFreeBookings) {
+            $booking->bookingStatus = BookingStatus::Confirmed->value;
+            $booking->paymentStatus = PaymentStatus::Paid->value;
+        } else {
+            $booking->bookingStatus = BookingStatus::Pending->value;
+            $booking->paymentStatus = PaymentStatus::Unpaid->value;
+        }
+
+        return $this->_saveNew($booking);
+    }
+
+    /**
+     * A booking entered by staff in the control panel rather than submitted through the
+     * front-end form.
+     *
+     * The difference from `createBooking()` is only who decides the two statuses. There is
+     * no payment flow behind this — nobody is at a card form — so the status the admin
+     * picked is taken at face value: a phone booking they've already been paid for is
+     * confirmed and paid, one they haven't is confirmed and unpaid.
+     *
+     * Everything else is deliberately identical, including both save events, so an
+     * integration listening for new bookings sees these too.
+     */
+    public function createManualBooking(array $attributes): Booking
+    {
+        $booking = $this->_newBooking($attributes);
+        $booking->adminNotes = $attributes['adminNotes'] ?? null;
+
+        $booking->bookingStatus = (BookingStatus::tryFrom((string)($attributes['bookingStatus'] ?? ''))
+            ?? BookingStatus::Confirmed)->value;
+        $booking->paymentStatus = (PaymentStatus::tryFrom((string)($attributes['paymentStatus'] ?? ''))
+            ?? PaymentStatus::Unpaid)->value;
+
+        if ($booking->paymentStatus === PaymentStatus::Paid->value) {
+            $booking->paidAt = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        }
+
+        return $this->_saveNew($booking);
+    }
+
+    /**
+     * The parts of a new booking that don't depend on where it came from.
+     */
+    private function _newBooking(array $attributes): Booking
+    {
         $booking = new Booking();
         $booking->serviceId = (int)$attributes['serviceId'];
         $booking->providerId = (int)$attributes['providerId'];
@@ -40,16 +89,14 @@ class Bookings extends Component
             $booking->currency = $service->currency;
         }
 
-        // Auto-confirm free bookings
-        $settings = Plugin::getInstance()->getSettings();
-        if ($booking->price <= 0 && $settings->autoConfirmFreeBookings) {
-            $booking->bookingStatus = BookingStatus::Confirmed->value;
-            $booking->paymentStatus = PaymentStatus::Paid->value;
-        } else {
-            $booking->bookingStatus = BookingStatus::Pending->value;
-            $booking->paymentStatus = PaymentStatus::Unpaid->value;
-        }
+        return $booking;
+    }
 
+    /**
+     * Fire the save events around saving a new booking, and let a handler refuse it.
+     */
+    private function _saveNew(Booking $booking): Booking
+    {
         // Fire before event
         $event = new BookingEvent(['booking' => $booking, 'isNew' => true]);
         $this->trigger(self::EVENT_BEFORE_SAVE_BOOKING, $event);
