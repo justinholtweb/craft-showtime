@@ -10,7 +10,10 @@ use craft\helpers\UrlHelper;
 use DateTime;
 use justinholtweb\stub\elements\db\BookingQuery;
 use justinholtweb\stub\enums\BookingStatus;
+use justinholtweb\stub\enums\PaymentMode;
 use justinholtweb\stub\enums\PaymentStatus;
+use justinholtweb\stub\helpers\BookingHelper;
+use justinholtweb\stub\helpers\PaymentHelper;
 use justinholtweb\stub\helpers\TimeHelper;
 use justinholtweb\stub\Plugin;
 use justinholtweb\stub\records\BookingRecord;
@@ -30,6 +33,24 @@ class Booking extends Element
     public ?string $customerNotes = null;
     public ?string $adminNotes = null;
     public string $paymentStatus = 'unpaid';
+
+    /**
+     * The service's {@see PaymentMode} when the booking was made. A snapshot, so changing
+     * the service later never changes what this booking owes or how.
+     */
+    public string $paymentMode = 'full';
+
+    /**
+     * The deposit taken online at booking, for a deposit booking; 0 otherwise.
+     */
+    public float $depositAmount = 0;
+
+    /**
+     * Everything received so far — the deposit, a Stripe payment, payments staff recorded.
+     * The ledger behind it is `stub_payments`.
+     */
+    public float $amountPaid = 0;
+
     public ?string $stripePaymentIntentId = null;
     public ?string $paidAt = null;
     public ?string $cancelledAt = null;
@@ -169,6 +190,9 @@ class Booking extends Element
             'startDateTime' => Craft::t('stub', 'Date & Time'),
             'price' => Craft::t('stub', 'Price'),
             'paymentStatus' => Craft::t('stub', 'Payment'),
+            'amountPaid' => Craft::t('stub', 'Paid'),
+            'balanceDue' => Craft::t('stub', 'Balance Due'),
+            'paymentMode' => Craft::t('stub', 'Payment Mode'),
             'dateCreated' => Craft::t('stub', 'Created'),
         ];
     }
@@ -220,7 +244,16 @@ class Booking extends Element
                 return $dt ? $dt->format('M j, Y g:i A') : '';
 
             case 'price':
-                return \justinholtweb\stub\helpers\BookingHelper::formatPrice($this->price, $this->currency);
+                return BookingHelper::formatPrice($this->price, $this->currency);
+
+            case 'amountPaid':
+                return BookingHelper::formatPrice($this->amountPaid, $this->currency);
+
+            case 'balanceDue':
+                return BookingHelper::formatPrice($this->getBalanceDue(), $this->currency);
+
+            case 'paymentMode':
+                return Craft::t('stub', $this->getPaymentModeEnum()->label());
         }
 
         return parent::attributeHtml($attribute);
@@ -284,6 +317,9 @@ class Booking extends Element
         $record->customerNotes = $this->customerNotes;
         $record->adminNotes = $this->adminNotes;
         $record->paymentStatus = $this->paymentStatus;
+        $record->paymentMode = $this->paymentMode;
+        $record->depositAmount = $this->depositAmount;
+        $record->amountPaid = $this->amountPaid;
         $record->stripePaymentIntentId = $this->stripePaymentIntentId;
         $record->paidAt = $this->paidAt;
         $record->cancelledAt = $this->cancelledAt;
@@ -329,5 +365,80 @@ class Booking extends Element
     public function getPaymentStatusEnum(): PaymentStatus
     {
         return PaymentStatus::from($this->paymentStatus);
+    }
+
+    public function getPaymentModeEnum(): PaymentMode
+    {
+        return PaymentMode::tryFrom($this->paymentMode) ?? PaymentMode::Full;
+    }
+
+    /**
+     * What's still owed: the price less everything received.
+     */
+    public function getBalanceDue(): float
+    {
+        return PaymentHelper::balance((float)$this->price, (float)$this->amountPaid, $this->currency);
+    }
+
+    /**
+     * What the online payment step should charge now — the whole balance, the deposit, or
+     * nothing (pay in person, or already paid). Refunded and cancelled bookings owe nothing
+     * online.
+     */
+    public function getAmountDueOnline(): float
+    {
+        if (in_array($this->paymentStatus, [PaymentStatus::Paid->value, PaymentStatus::Refunded->value], true)
+            || $this->bookingStatus === BookingStatus::Cancelled->value) {
+            return 0.0;
+        }
+
+        return PaymentHelper::amountDueOnline(
+            $this->getPaymentModeEnum(),
+            (float)$this->price,
+            (float)$this->amountPaid,
+            (float)$this->depositAmount,
+            $this->currency,
+        );
+    }
+
+    /**
+     * One sentence on where the money stands — for emails and the booking form's confirmation.
+     *
+     * Worded so it reads the same to the customer and to staff.
+     */
+    public function getPaymentSummary(): string
+    {
+        $format = fn(float $amount) => BookingHelper::formatPrice($amount, $this->currency);
+        $price = (float)$this->price;
+
+        if ($price <= 0) {
+            return Craft::t('stub', 'No payment is required.');
+        }
+
+        if ($this->paymentStatus === PaymentStatus::Refunded->value) {
+            return Craft::t('stub', 'This booking has been refunded.');
+        }
+
+        $balance = $this->getBalanceDue();
+
+        if ($balance <= 0) {
+            return Craft::t('stub', 'Paid in full: {amount}.', ['amount' => $format($price)]);
+        }
+
+        if ($this->amountPaid > 0) {
+            return Craft::t('stub', 'Paid: {paid}. Balance due at the appointment: {balance}.', [
+                'paid' => $format((float)$this->amountPaid),
+                'balance' => $format($balance),
+            ]);
+        }
+
+        return match ($this->getPaymentModeEnum()) {
+            PaymentMode::Deposit => Craft::t('stub', 'A deposit of {deposit} is due now; the remaining {balance} is due at the appointment.', [
+                'deposit' => $format((float)$this->depositAmount),
+                'balance' => $format(PaymentHelper::balance($price, (float)$this->depositAmount, $this->currency)),
+            ]),
+            PaymentMode::InPerson => Craft::t('stub', 'Payment of {amount} is due at the appointment.', ['amount' => $format($balance)]),
+            PaymentMode::Full => Craft::t('stub', 'Amount due: {amount}.', ['amount' => $format($balance)]),
+        };
     }
 }

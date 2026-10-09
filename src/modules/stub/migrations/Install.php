@@ -46,6 +46,9 @@ class Install extends Migration
             'duration' => $this->integer()->notNull()->defaultValue(60),
             'price' => $this->decimal(14, 4)->notNull()->defaultValue(0),
             'currency' => $this->char(3)->notNull()->defaultValue('USD'),
+            'paymentMode' => $this->string(16)->notNull()->defaultValue('full'),
+            'depositType' => $this->string(16)->notNull()->defaultValue('percent'),
+            'depositValue' => $this->decimal(14, 4)->notNull()->defaultValue(0),
             'bufferTimeBefore' => $this->integer()->notNull()->defaultValue(0),
             'bufferTimeAfter' => $this->integer()->notNull()->defaultValue(0),
             'capacity' => $this->integer()->notNull()->defaultValue(1),
@@ -203,6 +206,9 @@ class Install extends Migration
             'customerNotes' => $this->text(),
             'adminNotes' => $this->text(),
             'paymentStatus' => $this->string()->notNull()->defaultValue('unpaid'),
+            'paymentMode' => $this->string(16)->notNull()->defaultValue('full'),
+            'depositAmount' => $this->decimal(14, 4)->notNull()->defaultValue(0),
+            'amountPaid' => $this->decimal(14, 4)->notNull()->defaultValue(0),
             'stripePaymentIntentId' => $this->string(),
             'paidAt' => $this->dateTime(),
             'cancelledAt' => $this->dateTime(),
@@ -244,6 +250,10 @@ class Install extends Migration
             'amount' => $this->decimal(14, 4)->notNull(),
             'currency' => $this->char(3)->notNull()->defaultValue('USD'),
             'status' => $this->string()->notNull()->defaultValue('pending'),
+            'method' => $this->string(16)->notNull()->defaultValue('stripe'),
+            'paidAt' => $this->dateTime(),
+            'note' => $this->string(),
+            'recordedById' => $this->integer(),
             'stripeResponse' => $this->json(),
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
@@ -253,6 +263,10 @@ class Install extends Migration
         $this->createIndex(null, '{{%stub_payments}}', ['bookingId']);
         $this->createIndex(null, '{{%stub_payments}}', ['stripePaymentIntentId']);
 
+        // Revenue reports ask "what was received in this period", which is this pair.
+        $this->createIndex(null, '{{%stub_payments}}', ['status', 'paidAt']);
+
         $this->addForeignKey(null, '{{%stub_payments}}', ['bookingId'], '{{%elements}}', ['id'], 'CASCADE');
+        $this->addForeignKey(null, '{{%stub_payments}}', ['recordedById'], '{{%users}}', ['id'], 'SET NULL');
     }
 }

@@ -23,12 +23,16 @@
                 {{ _self.stat('Pending'|t('showtime'), b.pendingCount, cpUrl('stub/bookings')) }}
             {% endif %}
 
+            {% if canViewRevenue and stats.tickets %}
+                {{ _self.stat('Tickets sold this month'|t('showtime'), stats.tickets.monthlyTickets, cpUrl('owl/events')) }}
+            {% endif %}
+
             {% if canViewMembers and stats.memberships %}
                 {{ _self.stat('Active members'|t('showtime'), stats.memberships.activeMembers, cpUrl('headcount/subscriptions')) }}
             {% endif %}
         </div>
 
-        {% if canViewRevenue and (stats.bookings or stats.memberships) %}
+        {% if canViewRevenue and (stats.bookings or stats.tickets or stats.memberships) %}
             <h2>{{ 'Monthly revenue'|t('showtime') }}</h2>
 
             <table class="data fullwidth">
@@ -37,6 +41,12 @@
                         <tr>
                             <th>{{ 'Bookings taken this month'|t('showtime') }}</th>
                             <td class="rightalign">{{ stats.bookings.monthlyRevenue|number_format(2) }}</td>
+                        </tr>
+                    {% endif %}
+                    {% if stats.tickets %}
+                        <tr>
+                            <th>{{ 'Event tickets this month'|t('showtime') }}</th>
+                            <td class="rightalign">{{ stats.tickets.monthlyRevenue|number_format(2) }}</td>
                         </tr>
                     {% endif %}
                     {% if stats.memberships %}
@@ -53,7 +63,7 @@
             </table>
 
             <p class="light">
-                {{ 'Booking revenue is what was actually collected this month; MRR is the recurring run rate.'|t('showtime') }}
+                {{ 'Bookings and tickets are what was actually collected this month — a deposit counts when it was paid, its balance when that was; MRR is the recurring run rate.'|t('showtime') }}
             </p>
         {% endif %}
 

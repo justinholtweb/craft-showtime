@@ -138,6 +138,9 @@ class Services extends Component
         $record->duration = $service->duration;
         $record->price = $service->price;
         $record->currency = $service->currency;
+        $record->paymentMode = $service->paymentMode;
+        $record->depositType = $service->depositType;
+        $record->depositValue = $service->depositValue;
         $record->bufferTimeBefore = $service->bufferTimeBefore;
         $record->bufferTimeAfter = $service->bufferTimeAfter;
         $record->capacity = $service->capacity;
@@ -184,6 +187,7 @@ class Services extends Component
         return (new Query())
             ->select([
                 'id', 'name', 'handle', 'description', 'duration', 'price', 'currency',
+                'paymentMode', 'depositType', 'depositValue',
                 'bufferTimeBefore', 'bufferTimeAfter', 'capacity', 'color', 'enabled',
                 'sortOrder', 'dateCreated', 'dateUpdated', 'dateDeleted', 'uid',
             ])
@@ -200,6 +204,9 @@ class Services extends Component
             'duration' => (int)$row['duration'],
             'price' => (float)$row['price'],
             'currency' => $row['currency'],
+            'paymentMode' => $row['paymentMode'],
+            'depositType' => $row['depositType'],
+            'depositValue' => (float)$row['depositValue'],
             'bufferTimeBefore' => (int)$row['bufferTimeBefore'],
             'bufferTimeAfter' => (int)$row['bufferTimeAfter'],
             'capacity' => (int)$row['capacity'],

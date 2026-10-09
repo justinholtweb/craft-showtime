@@ -76,6 +76,48 @@
             errors: service.getErrors('currency'),
         }) }}
 
+        {{ forms.selectField({
+            label: 'Payment'|t('stub'),
+            instructions: 'How a paid service’s price is collected. A free service never takes a payment, whatever this says.'|t('stub'),
+            id: 'paymentMode',
+            name: 'paymentMode',
+            value: service.paymentMode,
+            options: paymentModes|map(m => { label: m.label()|t('stub'), value: m.value }),
+            toggle: true,
+            targetPrefix: 'payment-mode-',
+            errors: service.getErrors('paymentMode'),
+        }) }}
+
+        <div id="payment-mode-deposit"{% if service.paymentMode != 'deposit' %} class="hidden"{% endif %}>
+            {{ forms.selectField({
+                label: 'Deposit Type'|t('stub'),
+                id: 'depositType',
+                name: 'depositType',
+                value: service.depositType,
+                options: [
+                    { label: 'Percentage of the price'|t('stub'), value: 'percent' },
+                    { label: 'Fixed amount'|t('stub'), value: 'fixed' },
+                ],
+                errors: service.getErrors('depositType'),
+            }) }}
+
+            {{ forms.textField({
+                label: 'Deposit'|t('stub'),
+                instructions: 'Taken online at booking. The balance is due at the appointment, and is recorded with **Mark as Paid** on the booking.'|t('stub'),
+                id: 'depositValue',
+                name: 'depositValue',
+                value: service.depositValue,
+                type: 'number',
+                step: '0.01',
+                min: 0,
+                errors: service.getErrors('depositValue'),
+            }) }}
+        </div>
+
+        <div id="payment-mode-inPerson"{% if service.paymentMode != 'inPerson' %} class="hidden"{% endif %}>
+            <p class="light">{{ 'Bookings are confirmed without a payment and stay unpaid until someone marks them paid.'|t('stub') }}</p>
+        </div>
+
         <hr>
 
         {{ forms.textField({

@@ -5,6 +5,7 @@ namespace justinholtweb\stub\controllers;
 use Craft;
 use craft\helpers\StringHelper;
 use craft\web\Controller;
+use justinholtweb\stub\enums\PaymentMode;
 use justinholtweb\stub\models\Service;
 use justinholtweb\stub\Plugin;
 use yii\web\Response;
@@ -54,6 +55,7 @@ class ServicesController extends Controller
             // Pass the saved code through so a service priced in a currency that's since
             // been dropped from Commerce still shows its own value in the picker.
             'currencyOptions' => Plugin::getInstance()->currencies->getCurrencyOptions($service->currency),
+            'paymentModes' => PaymentMode::cases(),
         ]);
     }
 
@@ -79,6 +81,9 @@ class ServicesController extends Controller
         $service->duration = (int)$request->getBodyParam('duration', $service->duration);
         $service->price = (float)$request->getBodyParam('price', $service->price);
         $service->currency = $request->getBodyParam('currency', $service->currency);
+        $service->paymentMode = (string)$request->getBodyParam('paymentMode', $service->paymentMode);
+        $service->depositType = (string)$request->getBodyParam('depositType', $service->depositType);
+        $service->depositValue = (float)$request->getBodyParam('depositValue', $service->depositValue);
         $service->bufferTimeBefore = (int)$request->getBodyParam('bufferTimeBefore', $service->bufferTimeBefore);
         $service->bufferTimeAfter = (int)$request->getBodyParam('bufferTimeAfter', $service->bufferTimeAfter);
         $service->capacity = (int)$request->getBodyParam('capacity', $service->capacity);

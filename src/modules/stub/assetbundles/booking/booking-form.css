@@ -311,7 +311,9 @@
 /* `.stub-btn` sets `display: inline-flex`, which outranks the user agent's rule for the
    `hidden` attribute, so a hidden Back button would otherwise still show. */
 .stub-btn[hidden],
-.stub-actions[hidden] {
+.stub-actions[hidden],
+.stub-summary [hidden],
+.stub-payment-amount[hidden] {
     display: none;
 }
 
@@ -402,4 +404,14 @@
     padding: 24px;
     text-align: center;
     color: var(--stub-text-muted);
+}
+
+/* What the payment step is about to charge — the whole price, or a deposit. */
+.stub-payment-amount {
+    margin: 0 0 12px;
+    font-weight: 600;
+}
+
+.stub-service-card .stub-service-payment {
+    color: var(--stub-primary, inherit);
 }

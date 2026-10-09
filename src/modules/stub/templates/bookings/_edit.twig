@@ -38,11 +38,32 @@
                             <th>{{ 'Price'|t('stub') }}</th>
                             <td>{{ craft.stub.formatPrice(booking.price, booking.currency) }}</td>
                         </tr>
+                        {% if booking.price > 0 %}
+                            <tr>
+                                <th>{{ 'Payment Mode'|t('stub') }}</th>
+                                <td>{{ booking.paymentModeEnum.label()|t('stub') }}</td>
+                            </tr>
+                            {% if booking.paymentMode == 'deposit' %}
+                                <tr>
+                                    <th>{{ 'Deposit'|t('stub') }}</th>
+                                    <td>{{ craft.stub.formatPrice(booking.depositAmount, booking.currency) }}</td>
+                                </tr>
+                            {% endif %}
+                            <tr>
+                                <th>{{ 'Paid'|t('stub') }}</th>
+                                <td>{{ craft.stub.formatPrice(booking.amountPaid, booking.currency) }}</td>
+                            </tr>
+                            <tr>
+                                <th>{{ 'Balance Due'|t('stub') }}</th>
+                                <td><strong>{{ craft.stub.formatPrice(booking.balanceDue, booking.currency) }}</strong></td>
+                            </tr>
+                        {% endif %}
                         <tr>
                             <th>{{ 'Payment Status'|t('stub') }}</th>
                             <td>
-                                <span class="status {{ booking.paymentStatus == 'paid' ? 'green' : (booking.paymentStatus == 'refunded' ? 'grey' : 'orange') }}"></span>
-                                {{ booking.paymentStatus|capitalize }}
+                                {% set paymentStatus = booking.paymentStatusEnum %}
+                                <span class="status {{ paymentStatus.color() }}"></span>
+                                {{ paymentStatus.label()|t('stub') }}
                             </td>
                         </tr>
                         {% if booking.stripePaymentIntentId %}
@@ -131,6 +152,68 @@
                     <button type="submit" class="btn submit">{{ 'Update'|t('stub') }}</button>
                 </form>
             </div>
+            {% if booking.price > 0 %}
+                <div class="pane" style="margin-top: 24px;">
+                    <h2>{{ 'Payment'|t('stub') }}</h2>
+
+                    {% if booking.balanceDue > 0 and booking.paymentStatus != 'refunded' and currentUser.can('stub:recordPayments') %}
+                        <form method="post">
+                            {{ csrfInput() }}
+                            {{ actionInput('stub/bookings/mark-paid') }}
+                            {{ hiddenInput('bookingId', booking.id) }}
+
+                            {{ forms.textField({
+                                label: 'Amount Received'|t('stub'),
+                                instructions: 'Leave as the balance to mark the booking paid in full.'|t('stub'),
+                                id: 'amount',
+                                name: 'amount',
+                                value: booking.balanceDue,
+                                type: 'number',
+                                step: 'any',
+                                min: 0,
+                                max: booking.balanceDue,
+                            }) }}
+
+                            {{ forms.textField({
+                                label: 'Note'|t('stub'),
+                                instructions: 'How it was paid — cash, card at the desk.'|t('stub'),
+                                id: 'note',
+                                name: 'note',
+                                maxlength: 255,
+                            }) }}
+
+                            <button type="submit" class="btn submit">{{ 'Mark as Paid'|t('stub') }}</button>
+                        </form>
+                    {% elseif booking.balanceDue <= 0 %}
+                        <p class="light">{{ 'Nothing is owed on this booking.'|t('stub') }}</p>
+                    {% endif %}
+
+                    {% if payments|length %}
+                        <h3 style="margin-top: 16px;">{{ 'Payments'|t('stub') }}</h3>
+                        <table class="data fullwidth">
+                            <tbody>
+                                {% for payment in payments %}
+                                    <tr>
+                                        <td>
+                                            {{ craft.stub.formatPrice(payment.amount, payment.currency) }}
+                                            <div class="light smalltext">
+                                                {{ payment.method == 'manual' ? 'Recorded'|t('stub') : 'Stripe'|t('stub') }}
+                                                {%- if payment.status != 'succeeded' %} · {{ payment.status|t('stub') }}{% endif %}
+                                                {%- if payment.note %} · {{ payment.note }}{% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="rightalign light smalltext">
+                                            {% set when = payment.paidAt ?? payment.dateCreated %}
+                                            {{ when ? (when ~ ' UTC')|date('M j, Y g:i A') : '' }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                </div>
+            {% endif %}
+
             <div class="pane" style="margin-top: 24px;">
                 <h2>{{ 'Reminder'|t('stub') }}</h2>
 

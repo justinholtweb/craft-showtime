@@ -9,6 +9,7 @@ use DateTimeZone;
 use justinholtweb\stub\elements\Booking;
 use justinholtweb\stub\enums\BookingStatus;
 use justinholtweb\stub\enums\PaymentStatus;
+use justinholtweb\stub\helpers\BookingHelper;
 use justinholtweb\stub\helpers\TimeHelper;
 use justinholtweb\stub\Plugin;
 use yii\web\Response;
@@ -23,6 +24,11 @@ class BookingsController extends Controller
 
         if (in_array($action->id, ['index', 'edit'])) {
             $this->requirePermission('stub:viewBookings');
+        } elseif ($action->id === 'mark-paid') {
+            // Its own permission: taking money at the desk is often a different person's job
+            // from editing bookings, and recording money received is what reports add up.
+            $this->requirePermission('stub:viewBookings');
+            $this->requirePermission('stub:recordPayments');
         } else {
             $this->requirePermission('stub:manageBookings');
         }
@@ -59,7 +65,50 @@ class BookingsController extends Controller
             'statuses' => BookingStatus::cases(),
             'settings' => Plugin::getInstance()->getSettings(),
             'remindersEnabled' => Plugin::getInstance()->reminders->isEnabled(),
+            'payments' => Plugin::getInstance()->payments->getPaymentsForBooking($booking->id),
         ]);
+    }
+
+    /**
+     * Record money received outside Stripe — a pay-in-person booking's price, a deposit's
+     * balance — against a booking. The amount defaults to the whole balance.
+     */
+    public function actionMarkPaid(): ?Response
+    {
+        $this->requirePostRequest();
+
+        $request = Craft::$app->getRequest();
+        $bookingId = (int)$request->getRequiredBodyParam('bookingId');
+        $booking = Plugin::getInstance()->bookings->getBookingById($bookingId);
+
+        if (!$booking) {
+            throw new \yii\web\NotFoundHttpException('Booking not found.');
+        }
+
+        $rawAmount = trim((string)$request->getBodyParam('amount', ''));
+        if ($rawAmount !== '' && !is_numeric($rawAmount)) {
+            Craft::$app->getSession()->setError(Craft::t('stub', 'Enter the amount as a number.'));
+            return $this->redirect("stub/bookings/{$bookingId}");
+        }
+
+        $payment = Plugin::getInstance()->payments->recordManualPayment(
+            $booking,
+            $rawAmount === '' ? null : (float)$rawAmount,
+            is_string($note = $request->getBodyParam('note')) ? $note : null,
+            Craft::$app->getUser()->getId(),
+        );
+
+        if ($payment->hasErrors()) {
+            Craft::$app->getSession()->setError($payment->getFirstError('amount') ?? Craft::t('stub', 'Couldn’t record the payment.'));
+        } else {
+            Craft::$app->getSession()->setNotice($booking->paymentStatus === PaymentStatus::Paid->value
+                ? Craft::t('stub', 'Booking marked as paid.')
+                : Craft::t('stub', 'Payment recorded. {balance} is still owed.', [
+                    'balance' => BookingHelper::formatPrice($booking->getBalanceDue(), $booking->currency),
+                ]));
+        }
+
+        return $this->redirect("stub/bookings/{$bookingId}");
     }
 
     /**
@@ -87,7 +136,8 @@ class BookingsController extends Controller
             // list as the service is picked without a round trip per keystroke.
             'providerServiceIds' => $providerServiceIds,
             'statuses' => BookingStatus::cases(),
-            'paymentStatuses' => PaymentStatus::cases(),
+            // Not "partially paid": there's no amount on this form to say how much.
+            'paymentStatuses' => array_values(array_filter(PaymentStatus::cases(), fn(PaymentStatus $s) => $s !== PaymentStatus::PartiallyPaid)),
         ]);
     }
 

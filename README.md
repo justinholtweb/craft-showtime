@@ -25,6 +25,13 @@ together:
   bundle instead of one per plugin, with every notification listed on a single screen.
 - **One person, one view** — *Showtime → People* shows a customer's bookings, membership and
   ticket orders together, and `craft.showtime.person()` gives templates the same object.
+- **One dashboard** — today's bookings, active members, tickets sold, and this month's revenue
+  from bookings, event tickets and memberships side by side. Booking and ticket figures are cash
+  received that month: a booking deposit counts when it was paid and its balance when that was,
+  and a ticket order counts when it was paid.
+
+Stub's services can each be paid in full at booking, by a deposit with the balance due at the
+appointment, or in person — see Stub's README.
 
 ## Requirements
 
@@ -93,7 +100,8 @@ composer ecs                     # composer ecs-fix to autofix
 ```
 
 `php craft showtime/test/run` asserts the whole mount contract against a real database and
-exits non-zero on failure. Run it against a **fresh install**, not just a migrated one — the
+exits non-zero on failure. `php tests/integration/checks.php` (run from the site root) covers the
+bundled Stub's payment modes and the dashboard's revenue figures, and is self-cleaning. Run it against a **fresh install**, not just a migrated one — the
 install and migrate paths diverge, and only the fresh one catches a table that a later
 migration created instead of `Install.php`.
 

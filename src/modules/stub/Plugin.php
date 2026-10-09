@@ -44,7 +44,17 @@ use yii\base\Exception;
  */
 class Plugin extends BasePlugin
 {
-    public string $schemaVersion = '1.1.0';
+    /**
+     * The placeholders every Stub email body may use. The three payment ones say what's been
+     * paid and what's still owed — `paymentSummary` as one ready-made sentence.
+     */
+    public const EMAIL_VARIABLES = [
+        'referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName',
+        'dateFormatted', 'timeFormatted', 'priceFormatted', 'amountPaidFormatted',
+        'balanceDueFormatted', 'paymentSummary', 'timezone',
+    ];
+
+    public string $schemaVersion = '1.2.0';
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
 
@@ -251,6 +261,9 @@ class Plugin extends BasePlugin
             'stub:deleteBookings' => [
                 'label' => Craft::t('stub', 'Delete bookings'),
             ],
+            'stub:recordPayments' => [
+                'label' => Craft::t('stub', 'Record payments (mark bookings as paid)'),
+            ],
             'stub:manageServices' => [
                 'label' => Craft::t('stub', 'Manage services'),
             ],
@@ -298,41 +311,42 @@ class Plugin extends BasePlugin
      */
     public static function emailDefinitions(): array
     {
+        // Every Stub email is about one booking, so they all get the same variables.
         return [
             'stub_booking_confirmation' => [
-                'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],
+                'variables' => self::EMAIL_VARIABLES,
                 'heading' => Craft::t('stub', 'Booking Confirmation'),
                 'description' => Craft::t('stub', 'Sent to the customer when their booking is created.'),
                 'setting' => 'sendCustomerConfirmation',
                 'subject' => Craft::t('stub', 'Your booking has been confirmed — {{referenceNumber}}'),
-                'body' => Craft::t('stub', "Hi {{customerName}},\n\nYour booking for {{serviceName}} with {{providerName}} on {{dateFormatted}} at {{timeFormatted}} has been confirmed.\n\nReference: {{referenceNumber}}\n\nThank you!"),
+                'body' => Craft::t('stub', "Hi {{customerName}},\n\nYour booking for {{serviceName}} with {{providerName}} on {{dateFormatted}} at {{timeFormatted}} has been confirmed.\n\n{{paymentSummary}}\n\nReference: {{referenceNumber}}\n\nThank you!"),
             ],
             'stub_admin_notification' => [
-                'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],
+                'variables' => self::EMAIL_VARIABLES,
                 'heading' => Craft::t('stub', 'New Booking Notification'),
                 'description' => Craft::t('stub', 'Sent to the admin address when any booking is created.'),
                 'setting' => 'sendAdminNotification',
                 'subject' => Craft::t('stub', 'New booking: {{referenceNumber}}'),
-                'body' => Craft::t('stub', "A new booking has been created.\n\nReference: {{referenceNumber}}\nService: {{serviceName}}\nProvider: {{providerName}}\nCustomer: {{customerName}}\nDate: {{dateFormatted}} at {{timeFormatted}}"),
+                'body' => Craft::t('stub', "A new booking has been created.\n\nReference: {{referenceNumber}}\nService: {{serviceName}}\nProvider: {{providerName}}\nCustomer: {{customerName}}\nDate: {{dateFormatted}} at {{timeFormatted}}\nPayment: {{paymentSummary}}"),
             ],
             'stub_booking_reminder' => [
-                'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],
+                'variables' => self::EMAIL_VARIABLES,
                 'heading' => Craft::t('stub', 'Booking Reminder'),
                 'description' => Craft::t('stub', 'Sent to the customer ahead of their appointment. Requires the stub/reminders/send command on a schedule.'),
                 'setting' => 'sendCustomerReminder',
                 'subject' => Craft::t('stub', 'Reminder: {{serviceName}} on {{dateFormatted}}'),
-                'body' => Craft::t('stub', "Hi {{customerName}},\n\nThis is a reminder of your booking for {{serviceName}} with {{providerName}} on {{dateFormatted}} at {{timeFormatted}} ({{timezone}}).\n\nReference: {{referenceNumber}}\n\nWe look forward to seeing you."),
+                'body' => Craft::t('stub', "Hi {{customerName}},\n\nThis is a reminder of your booking for {{serviceName}} with {{providerName}} on {{dateFormatted}} at {{timeFormatted}} ({{timezone}}).\n\n{{paymentSummary}}\n\nReference: {{referenceNumber}}\n\nWe look forward to seeing you."),
             ],
             'stub_booking_reminder_internal' => [
-                'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],
+                'variables' => self::EMAIL_VARIABLES,
                 'heading' => Craft::t('stub', 'Booking Reminder (Provider & Admin)'),
                 'description' => Craft::t('stub', 'The same reminder, sent to the provider and the admin address.'),
                 'setting' => 'sendInternalReminder',
                 'subject' => Craft::t('stub', 'Upcoming booking: {{referenceNumber}} on {{dateFormatted}}'),
-                'body' => Craft::t('stub', "An upcoming booking.\n\nReference: {{referenceNumber}}\nService: {{serviceName}}\nProvider: {{providerName}}\nCustomer: {{customerName}} ({{customerEmail}})\nDate: {{dateFormatted}} at {{timeFormatted}} ({{timezone}})"),
+                'body' => Craft::t('stub', "An upcoming booking.\n\nReference: {{referenceNumber}}\nService: {{serviceName}}\nProvider: {{providerName}}\nCustomer: {{customerName}} ({{customerEmail}})\nDate: {{dateFormatted}} at {{timeFormatted}} ({{timezone}})\nPayment: {{paymentSummary}}"),
             ],
             'stub_booking_cancellation' => [
-                'variables' => ['referenceNumber', 'customerName', 'customerEmail', 'serviceName', 'providerName', 'dateFormatted', 'timeFormatted', 'priceFormatted', 'timezone'],
+                'variables' => self::EMAIL_VARIABLES,
                 'heading' => Craft::t('stub', 'Booking Cancellation'),
                 'description' => Craft::t('stub', 'Sent to the customer and the admin address when a booking is cancelled.'),
                 'setting' => 'sendCancellationEmail',

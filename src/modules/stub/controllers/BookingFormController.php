@@ -6,7 +6,9 @@ use Craft;
 use craft\web\Controller;
 use DateTime;
 use DateTimeZone;
+use justinholtweb\stub\enums\BookingStatus;
 use justinholtweb\stub\helpers\BookingHelper;
+use justinholtweb\stub\helpers\PaymentHelper;
 use justinholtweb\stub\helpers\RateLimitHelper;
 use justinholtweb\stub\Plugin;
 use yii\web\Response;
@@ -86,7 +88,21 @@ class BookingFormController extends Controller
         // Send admin notification
         Plugin::getInstance()->emails->sendAdminNotification($booking);
 
-        $requiresPayment = $service->price > 0 && $settings->paymentEnabled;
+        // A booking that stands already — free, or pay-in-person — has nothing left to wait
+        // for, so its confirmation goes now. (A paid booking's goes when Stripe confirms it.)
+        if ($booking->bookingStatus === BookingStatus::Confirmed->value) {
+            Plugin::getInstance()->emails->sendConfirmation($booking);
+        }
+
+        $dueNow = $booking->getAmountDueOnline();
+        $requiresPayment = $dueNow > 0 && $settings->paymentEnabled;
+
+        // What the confirmation screen says about money, once the online step (if any) is done.
+        $after = clone $booking;
+        if ($requiresPayment) {
+            $after->amountPaid = $dueNow;
+            $after->paymentStatus = PaymentHelper::statusFor((float)$after->price, $dueNow, $after->currency)->value;
+        }
 
         return $this->asJson([
             'success' => true,
@@ -94,8 +110,14 @@ class BookingFormController extends Controller
             'referenceNumber' => $booking->referenceNumber,
             'paymentToken' => BookingHelper::generatePaymentToken($booking),
             'requiresPayment' => $requiresPayment,
-            'price' => $service->price,
-            'currency' => $service->currency,
+            'price' => $booking->price,
+            'currency' => $booking->currency,
+            'paymentMode' => $booking->paymentMode,
+            'amountDueNow' => $requiresPayment ? $dueNow : 0,
+            'amountDueNowFormatted' => BookingHelper::formatPrice($requiresPayment ? $dueNow : 0, $booking->currency),
+            'balanceDue' => $after->getBalanceDue(),
+            'balanceDueFormatted' => BookingHelper::formatPrice($after->getBalanceDue(), $booking->currency),
+            'paymentSummary' => $after->getPaymentSummary(),
         ]);
     }
 }

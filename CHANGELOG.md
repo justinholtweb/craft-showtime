@@ -1,5 +1,28 @@
 # Release Notes for Showtime
 
+## 5.4.0 - 2026-10-08
+
+Bundles Stub 5.9.0.
+
+### Added
+
+- **Event ticket revenue on the dashboard.** The monthly revenue table has a line for Owl ticket
+  and registration orders paid this month, and the combined figure now adds it to bookings and
+  MRR. A "Tickets sold this month" card sits with the other stats. Both need Owl ticketing
+  (Commerce); without it the dashboard shows what it did before.
+- **Stub: deposits and pay-in-person.** A service can be paid in full at booking, by a deposit
+  (a percentage or a fixed sum) with the balance due at the appointment, or in person. Staff
+  record money received with **Mark as Paid** on the booking, under the new **Record payments**
+  permission in the Showtime permission group.
+- `Dashboard::ticketStats()`.
+- `tests/integration/checks.php`.
+
+### Changed
+
+- **The dashboard's booking revenue is cash received.** It now sums the payments received this
+  month, so a deposit counts in the month it was paid and its balance in the month that was.
+  Ticket orders count in the month they were paid, the same rule.
+
 ## 5.3.4 - 2026-10-03
 
 Bundles Stub 5.8.1 and Owl 5.2.1. (The `5.3.3` tag marks the 5.3.2 release below; there is no

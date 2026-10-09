@@ -19,6 +19,9 @@ use craft\db\ActiveRecord;
  * @property string|null $customerNotes
  * @property string|null $adminNotes
  * @property string $paymentStatus
+ * @property string $paymentMode
+ * @property float $depositAmount
+ * @property float $amountPaid
  * @property string|null $stripePaymentIntentId
  * @property string|null $paidAt
  * @property string|null $cancelledAt

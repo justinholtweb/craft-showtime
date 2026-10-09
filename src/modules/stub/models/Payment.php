@@ -13,6 +13,18 @@ class Payment extends Model
     public float $amount = 0;
     public string $currency = 'USD';
     public string $status = 'pending';
+
+    /**
+     * `stripe` for a payment taken online, `manual` for one staff recorded with Mark as Paid.
+     */
+    public string $method = 'stripe';
+
+    /**
+     * When the money arrived, as a naive UTC string — what revenue reports count by.
+     */
+    public ?string $paidAt = null;
+    public ?string $note = null;
+    public ?int $recordedById = null;
     public ?array $stripeResponse = null;
     public ?string $dateCreated = null;
     public ?string $dateUpdated = null;

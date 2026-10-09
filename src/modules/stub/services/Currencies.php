@@ -147,6 +147,14 @@ class Currencies extends Component
     }
 
     /**
+     * The reverse of {@see toMinorUnits()}: Stripe's integer amount back to a decimal price.
+     */
+    public static function fromMinorUnits(int $minor, string $code): float
+    {
+        return $minor / (10 ** self::minorUnitDigits($code));
+    }
+
+    /**
      * Format a price for display, using the currency's real symbol, decimal count and
      * symbol placement rather than assuming "$" and two decimals.
      *

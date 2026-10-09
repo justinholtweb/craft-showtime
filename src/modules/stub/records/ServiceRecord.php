@@ -13,6 +13,9 @@ use craft\db\SoftDeleteTrait;
  * @property int $duration
  * @property float $price
  * @property string $currency
+ * @property string $paymentMode
+ * @property string $depositType
+ * @property float $depositValue
  * @property int $bufferTimeBefore
  * @property int $bufferTimeAfter
  * @property int $capacity

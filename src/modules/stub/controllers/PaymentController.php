@@ -38,7 +38,8 @@ class PaymentController extends Controller
             return $this->asJson(['success' => false, 'error' => 'Booking not found.']);
         }
 
-        if ($booking->price <= 0) {
+        // Pay-in-person, already paid, or a deposit already taken: nothing to charge online.
+        if ($booking->getAmountDueOnline() <= 0) {
             return $this->asJson(['success' => false, 'error' => 'No payment required.']);
         }
 

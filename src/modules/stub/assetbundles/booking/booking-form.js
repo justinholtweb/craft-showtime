@@ -26,6 +26,10 @@
                 bookingId: null,
                 referenceNumber: '',
                 requiresPayment: false,
+                amountDueNowFormatted: '',
+                balanceDue: 0,
+                balanceDueFormatted: '',
+                paymentSummary: '',
             };
             this.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
             this.calendarYear = new Date().getFullYear();
@@ -403,6 +407,10 @@
             this.data.referenceNumber = resp.referenceNumber;
             this.data.paymentToken = resp.paymentToken;
             this.data.requiresPayment = resp.requiresPayment;
+            this.data.amountDueNowFormatted = resp.amountDueNowFormatted || '';
+            this.data.balanceDue = resp.balanceDue || 0;
+            this.data.balanceDueFormatted = resp.balanceDueFormatted || '';
+            this.data.paymentSummary = resp.paymentSummary || '';
 
             if (resp.requiresPayment) {
                 this.initPayment();
@@ -418,6 +426,15 @@
             }
 
             this.goToStep(4);
+
+            // Say what's about to be charged — with a deposit, that isn't the price.
+            const amountEl = this.el.querySelector('#stub-payment-amount');
+            if (amountEl && this.data.amountDueNowFormatted) {
+                amountEl.textContent = this.data.balanceDue > 0
+                    ? `Deposit due now: ${this.data.amountDueNowFormatted}. Balance due at the appointment: ${this.data.balanceDueFormatted}.`
+                    : `Due now: ${this.data.amountDueNowFormatted}`;
+                amountEl.hidden = false;
+            }
 
             if (!this.stripe) {
                 this.stripe = Stripe(this.stripeKey);
@@ -449,6 +466,10 @@
             btn.disabled = true;
             btn.textContent = 'Processing...';
 
+            // Stripe may leave the page to authenticate (3DS) and come back to return_url, so
+            // keep what the confirmation screen needs for when it does.
+            this.rememberConfirmation();
+
             const { error } = await this.stripe.confirmPayment({
                 elements: this.stripeElements,
                 confirmParams: {
@@ -466,13 +487,58 @@
 
         showConfirmation() {
             this.goToStep(5);
+            this.renderConfirmation({
+                referenceNumber: this.data.referenceNumber,
+                serviceName: this.data.serviceName,
+                providerName: this.data.providerName,
+                date: this.data.date,
+                timeDisplay: this.data.timeDisplay,
+                paymentSummary: this.data.paymentSummary,
+            });
+        }
+
+        renderConfirmation(summary) {
             const container = this.el.querySelector('#stub-confirmation');
-            if (container) {
-                container.querySelector('.stub-ref').textContent = this.data.referenceNumber;
-                container.querySelector('#stub-confirm-service').textContent = this.data.serviceName;
-                container.querySelector('#stub-confirm-provider').textContent = this.data.providerName;
-                container.querySelector('#stub-confirm-date').textContent = this.data.date;
-                container.querySelector('#stub-confirm-time').textContent = this.data.timeDisplay;
+            if (!container) return;
+
+            container.querySelector('.stub-ref').textContent = summary.referenceNumber || '';
+            container.querySelector('#stub-confirm-service').textContent = summary.serviceName || '';
+            container.querySelector('#stub-confirm-provider').textContent = summary.providerName || '';
+            container.querySelector('#stub-confirm-date').textContent = summary.date || '';
+            container.querySelector('#stub-confirm-time').textContent = summary.timeDisplay || '';
+
+            const payment = container.querySelector('#stub-confirm-payment');
+            if (payment) {
+                payment.textContent = summary.paymentSummary || '';
+                container.querySelectorAll('.stub-confirm-payment').forEach(el => {
+                    el.hidden = !summary.paymentSummary;
+                });
+            }
+        }
+
+        rememberConfirmation() {
+            try {
+                sessionStorage.setItem('stub:confirm:' + this.data.referenceNumber, JSON.stringify({
+                    referenceNumber: this.data.referenceNumber,
+                    serviceName: this.data.serviceName,
+                    providerName: this.data.providerName,
+                    date: this.data.date,
+                    timeDisplay: this.data.timeDisplay,
+                    paymentSummary: this.data.paymentSummary,
+                }));
+            } catch (e) {
+                // Storage can be unavailable (private mode, blocked site data). The return
+                // screen then shows the reference alone, as it always did.
+            }
+        }
+
+        /** The confirmation kept by rememberConfirmation(), if this browser still has it. */
+        recallConfirmation(ref) {
+            try {
+                const stored = sessionStorage.getItem('stub:confirm:' + ref);
+                return stored ? JSON.parse(stored) : null;
+            } catch (e) {
+                return null;
             }
         }
 
@@ -529,8 +595,7 @@
             if (urlParams.get('redirect_status') === 'succeeded') {
                 form.goToStep(5);
                 const ref = urlParams.get('stub_booking') || '';
-                const refEl = el.querySelector('.stub-ref');
-                if (refEl) refEl.textContent = ref;
+                form.renderConfirmation(form.recallConfirmation(ref) || { referenceNumber: ref });
             }
         });
     });
