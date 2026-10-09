@@ -1,39 +1,45 @@
 {% import '_includes/forms' as forms %}
+{% from 'headcount/settings/_macros' import configWarning %}
 {% set readOnly = readOnly ?? false %}
+{% set overrides = craft.headcount.plugin.overriddenSettings %}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'paypalEnabled' in overrides,
     label: 'Enable PayPal'|t('headcount'),
     name: 'paypalEnabled',
     on: settings.paypalEnabled,
+    warning: 'paypalEnabled' in overrides ? configWarning('paypalEnabled'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'paypalSandbox' in overrides,
     label: 'Sandbox Mode'|t('headcount'),
     instructions: 'Use PayPal sandbox for testing.'|t('headcount'),
     name: 'paypalSandbox',
     on: settings.paypalSandbox,
+    warning: 'paypalSandbox' in overrides ? configWarning('paypalSandbox'),
 }) }}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'paypalClientId' in overrides,
     label: 'Client ID'|t('headcount'),
     name: 'paypalClientId',
     suggestEnvVars: true,
     value: settings.paypalClientId,
+    warning: 'paypalClientId' in overrides ? configWarning('paypalClientId'),
 }) }}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'paypalClientSecret' in overrides,
     label: 'Client Secret'|t('headcount'),
     name: 'paypalClientSecret',
     suggestEnvVars: true,
     value: settings.paypalClientSecret,
+    warning: 'paypalClientSecret' in overrides ? configWarning('paypalClientSecret'),
 }) }}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'paypalWebhookId' in overrides,
     label: 'Webhook ID'|t('headcount'),
     instructions: 'Required for webhook signature verification.'|t('headcount'),
     name: 'paypalWebhookId',
@@ -41,5 +47,5 @@
     value: settings.paypalWebhookId,
     warning: settings.paypalEnabled and not settings.secretIsSet('paypalWebhookId')
         ? 'PayPal webhooks are refused until a webhook ID is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from PayPal events.'|t('headcount')
-        : null,
+        : ('paypalWebhookId' in overrides ? configWarning('paypalWebhookId')),
 }) }}

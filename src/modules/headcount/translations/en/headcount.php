@@ -58,4 +58,7 @@ return [
     'PayPal webhooks are refused until a webhook ID is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from PayPal events.' => 'PayPal webhooks are refused until a webhook ID is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from PayPal events.',
     'This environment variable doesn’t resolve, so API-key access is off.' => 'This environment variable doesn’t resolve, so API-key access is off.',
     'This environment variable doesn’t resolve, so outgoing webhooks aren’t sent.' => 'This environment variable doesn’t resolve, so outgoing webhooks aren’t sent.',
+    'Handles must start with a letter and contain only letters, numbers, hyphens and underscores.' => 'Handles must start with a letter and contain only letters, numbers, hyphens and underscores.',
+    'A plan with this handle already exists.' => 'A plan with this handle already exists.',
+    'This is being overridden by the `{setting}` setting in `config/headcount.php`.' => 'This is being overridden by the `{setting}` setting in `config/headcount.php`.',
 ];

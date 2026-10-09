@@ -1,0 +1,7 @@
+{#
+  Shown on a setting that `config/headcount.php` sets. Craft applies the file over the
+  saved value, so editing it here would do nothing.
+#}
+{% macro configWarning(setting) -%}
+    {{ 'This is being overridden by the `{setting}` setting in `config/headcount.php`.'|t('headcount', { setting: setting }) }}
+{%- endmacro %}

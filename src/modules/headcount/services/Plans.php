@@ -58,7 +58,19 @@ class Plans extends Component
 
     public function savePlan(Plan $plan): bool
     {
-        if (!$plan->validate()) {
+        $plan->validate();
+
+        // The table has a unique index on `handle`; checking here turns that database
+        // exception into a field error. Done in the service so the model stays usable
+        // without a database.
+        if (!$plan->hasErrors('handle') && $this->_handleIsTaken($plan)) {
+            $plan->addError('handle', Craft::t('headcount', 'A plan with this handle already exists.'));
+        }
+
+        if ($plan->hasErrors()) {
+            // The control panel only says "Couldn't save plan", so leave the reasons
+            // somewhere a developer will look.
+            Craft::warning('Plan not saved: ' . implode(' ', $plan->getErrorSummary(true)), __METHOD__);
             return false;
         }
 
@@ -140,6 +152,19 @@ class Plans extends Component
         $this->_plansByHandle = null;
 
         return true;
+    }
+
+    private function _handleIsTaken(Plan $plan): bool
+    {
+        $query = (new Query())
+            ->from('{{%headcount_plans}}')
+            ->where(['handle' => $plan->handle]);
+
+        if ($plan->id) {
+            $query->andWhere(['not', ['id' => $plan->id]]);
+        }
+
+        return $query->exists();
     }
 
     private function _loadPlans(): void

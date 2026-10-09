@@ -35,7 +35,7 @@ class Subscriptions extends Component
         $subscription->endDate = $this->_parseDate($attributes['endDate'] ?? null);
         $subscription->cancelAtPeriodEnd = $attributes['cancelAtPeriodEnd'] ?? false;
         $subscription->amount = $attributes['amount'] ?? 0;
-        $subscription->currency = $attributes['currency'] ?? 'USD';
+        $subscription->currency = $attributes['currency'] ?? Headcount::getInstance()->getSettings()->getCurrencyCode();
         $subscription->metadata = $attributes['metadata'] ?? null;
 
         // Fire before event

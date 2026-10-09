@@ -91,7 +91,9 @@ class Plan extends Model
         return [
             [['name', 'handle', 'billingInterval', 'currency', 'termType'], 'required'],
             [['name', 'handle'], 'string', 'max' => 255],
-            [['handle'], 'match', 'pattern' => '/^[a-z][a-z0-9\-]*$/'],
+            // Craft's own handles are camelCase, so accept that alongside the kebab-case
+            // handles earlier versions insisted on. Before 5.3.4 `proMonthly` was refused.
+            [['handle'], 'match', 'pattern' => '/^[a-zA-Z][a-zA-Z0-9_\-]*$/', 'message' => \Craft::t('headcount', 'Handles must start with a letter and contain only letters, numbers, hyphens and underscores.')],
             [['description'], 'string'],
             [['userGroupId', 'billingIntervalCount', 'trialDays', 'sortOrder'], 'integer'],
             [['price'], 'number', 'min' => 0],

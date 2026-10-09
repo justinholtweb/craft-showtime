@@ -24,6 +24,14 @@ class HeadcountVariable
     }
 
     /**
+     * The default currency code, e.g. `{{ amount|currency(craft.headcount.currency) }}`.
+     */
+    public function getCurrency(): string
+    {
+        return Headcount::getInstance()->getSettings()->getCurrencyCode();
+    }
+
+    /**
      * Check if the current user has an active subscription.
      */
     public function isSubscribed(?string $planHandle = null): bool

@@ -249,7 +249,7 @@ class Stripe extends Component
             $params['percent_off'] = $amount;
         } else {
             $params['amount_off'] = (int)($amount * 100);
-            $params['currency'] = strtolower($currency ?? 'usd');
+            $params['currency'] = strtolower($currency ?? Headcount::getInstance()->getSettings()->getCurrencyCode());
         }
 
         return $this->getClient()->coupons->create($params);

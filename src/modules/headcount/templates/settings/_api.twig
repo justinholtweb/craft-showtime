@@ -1,8 +1,10 @@
 {% import '_includes/forms' as forms %}
+{% from 'headcount/settings/_macros' import configWarning %}
 {% set readOnly = readOnly ?? false %}
+{% set overrides = craft.headcount.plugin.overriddenSettings %}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'apiKey' in overrides,
     label: 'API Key'|t('headcount'),
     instructions: 'Key for server-to-server authentication. Pass it in the `X-Headcount-Api-Key` header — the `?apiKey=` query parameter was removed in 5.2.0.'|t('headcount'),
     name: 'apiKey',
@@ -10,19 +12,20 @@
     value: settings.apiKey,
     warning: settings.apiKey and not settings.secretIsSet('apiKey')
         ? 'This environment variable doesn’t resolve, so API-key access is off.'|t('headcount')
-        : null,
+        : ('apiKey' in overrides ? configWarning('apiKey')),
 }) }}
 
 {{ forms.textField({
-    disabled: readOnly,
+    disabled: readOnly or 'outgoingWebhookUrl' in overrides,
     label: 'Outgoing Webhook URL'|t('headcount'),
     instructions: 'URL to send outgoing webhook events to. Leave blank to send none.'|t('headcount'),
     name: 'outgoingWebhookUrl',
     value: settings.outgoingWebhookUrl,
+    warning: 'outgoingWebhookUrl' in overrides ? configWarning('outgoingWebhookUrl'),
 }) }}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'outgoingWebhookSecret' in overrides,
     label: 'Outgoing Webhook Secret'|t('headcount'),
     instructions: 'Secret for HMAC-SHA256 signing outgoing webhooks.'|t('headcount'),
     name: 'outgoingWebhookSecret',
@@ -30,5 +33,5 @@
     value: settings.outgoingWebhookSecret,
     warning: settings.outgoingWebhookSecret and not settings.secretIsSet('outgoingWebhookSecret')
         ? 'This environment variable doesn’t resolve, so outgoing webhooks aren’t sent.'|t('headcount')
-        : null,
+        : ('outgoingWebhookSecret' in overrides ? configWarning('outgoingWebhookSecret')),
 }) }}

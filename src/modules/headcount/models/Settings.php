@@ -168,6 +168,15 @@ class Settings extends Model
         return $resolved === '' || str_starts_with($resolved, '$') ? '' : $resolved;
     }
 
+    /**
+     * The default currency as an ISO code — what new plans start with and what the reports
+     * show money in.
+     */
+    public function getCurrencyCode(): string
+    {
+        return strtoupper(trim($this->defaultCurrency)) ?: 'USD';
+    }
+
     /** Whether a credential setting resolves to something — for the settings screens' warnings. */
     public function secretIsSet(string $attribute): bool
     {

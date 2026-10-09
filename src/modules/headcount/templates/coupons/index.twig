@@ -29,7 +29,7 @@
                             {% if coupon.discountType == 'percent' %}
                                 {{ coupon.discountAmount }}%
                             {% else %}
-                                {{ coupon.discountAmount|number_format(2) }} flat
+                                {{ coupon.discountAmount|currency(craft.headcount.currency) }} flat
                             {% endif %}
                         </td>
                         <td>{{ coupon.currentUses }}{% if coupon.maxUses %} / {{ coupon.maxUses }}{% endif %}</td>

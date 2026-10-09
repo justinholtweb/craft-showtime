@@ -150,7 +150,13 @@ class SettingsController extends Controller
 
         // Routed through the plugin so it works both standalone (Craft's Plugins service)
         // and mounted inside a host bundle, where the host owns settings storage.
-        if (!$plugin->saveSettings($settings->toArray())) {
+        //
+        // Settings pinned by the config file are left out: their inputs are disabled, so
+        // the model holds the config value, and saving it would copy that value (often a
+        // secret) into project config.
+        $values = array_diff_key($settings->toArray(), array_flip($plugin->getOverriddenSettings()));
+
+        if (!$plugin->saveSettings($values)) {
             return $this->asFailure('Couldn\'t save settings.');
         }
 

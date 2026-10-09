@@ -1,7 +1,7 @@
 <div class="headcount-widget-revenue">
     <div style="text-align: center; margin-bottom: 12px;">
         <div style="font-size: 12px; color: var(--gray-500);">{{ 'Monthly Recurring Revenue'|t('headcount') }}</div>
-        <div style="font-size: 28px; font-weight: 700;">${{ mrr|number_format(2) }}</div>
+        <div style="font-size: 28px; font-weight: 700;">{{ mrr|currency(craft.headcount.currency) }}</div>
     </div>
 
     {% if revenueOverTime|length %}
@@ -11,7 +11,7 @@
                 {% for row in revenueOverTime|slice(-7) %}
                     <tr>
                         <td>{{ row.date }}</td>
-                        <td style="text-align: right;">${{ row.revenue|number_format(2) }}</td>
+                        <td style="text-align: right;">{{ row.revenue|currency(craft.headcount.currency) }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

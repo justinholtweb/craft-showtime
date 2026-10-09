@@ -1,68 +1,78 @@
 {% import '_includes/forms' as forms %}
+{% from 'headcount/settings/_macros' import configWarning %}
 {% set readOnly = readOnly ?? false %}
+{% set overrides = craft.headcount.plugin.overriddenSettings %}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'sendWelcomeEmail' in overrides,
     label: 'Welcome Email'|t('headcount'),
     instructions: 'Send when a new subscription is created.'|t('headcount'),
     name: 'sendWelcomeEmail',
     on: settings.sendWelcomeEmail,
+    warning: 'sendWelcomeEmail' in overrides ? configWarning('sendWelcomeEmail'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'sendPaymentReceiptEmail' in overrides,
     label: 'Payment Receipt'|t('headcount'),
     instructions: 'Send when a payment is successfully processed.'|t('headcount'),
     name: 'sendPaymentReceiptEmail',
     on: settings.sendPaymentReceiptEmail,
+    warning: 'sendPaymentReceiptEmail' in overrides ? configWarning('sendPaymentReceiptEmail'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'sendPaymentFailedEmail' in overrides,
     label: 'Payment Failed'|t('headcount'),
     instructions: 'Send when a payment fails.'|t('headcount'),
     name: 'sendPaymentFailedEmail',
     on: settings.sendPaymentFailedEmail,
+    warning: 'sendPaymentFailedEmail' in overrides ? configWarning('sendPaymentFailedEmail'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'sendExpirationReminderEmail' in overrides,
     label: 'Expiration Reminder'|t('headcount'),
     instructions: 'Send before a membership expires. Run `headcount/subscriptions/remind` daily for this to go out.'|t('headcount'),
     name: 'sendExpirationReminderEmail',
     on: settings.sendExpirationReminderEmail,
+    warning: 'sendExpirationReminderEmail' in overrides ? configWarning('sendExpirationReminderEmail'),
 }) }}
 
 {{ forms.textField({
-    disabled: readOnly,
+    disabled: readOnly or 'expirationReminderDays' in overrides,
     label: 'Reminder Days Before'|t('headcount'),
     name: 'expirationReminderDays',
     value: settings.expirationReminderDays,
     type: 'number',
     min: 1,
     size: 5,
+    warning: 'expirationReminderDays' in overrides ? configWarning('expirationReminderDays'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'sendTrialEndingEmail' in overrides,
     label: 'Trial Ending'|t('headcount'),
     instructions: 'Send when a trial is about to end.'|t('headcount'),
     name: 'sendTrialEndingEmail',
     on: settings.sendTrialEndingEmail,
+    warning: 'sendTrialEndingEmail' in overrides ? configWarning('sendTrialEndingEmail'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'sendCancellationEmail' in overrides,
     label: 'Cancellation Confirmation'|t('headcount'),
     instructions: 'Send when a subscription is canceled.'|t('headcount'),
     name: 'sendCancellationEmail',
     on: settings.sendCancellationEmail,
+    warning: 'sendCancellationEmail' in overrides ? configWarning('sendCancellationEmail'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'sendDripUnlockedEmail' in overrides,
     label: 'Drip Content Unlocked'|t('headcount'),
     instructions: 'Send when new drip content becomes available.'|t('headcount'),
     name: 'sendDripUnlockedEmail',
     on: settings.sendDripUnlockedEmail,
+    warning: 'sendDripUnlockedEmail' in overrides ? configWarning('sendDripUnlockedEmail'),
 }) }}

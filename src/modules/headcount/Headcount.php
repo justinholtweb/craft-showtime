@@ -183,6 +183,26 @@ class Headcount extends Plugin
         return Craft::$app->getPlugins()->savePluginSettings($this, $settings);
     }
 
+    /**
+     * Settings pinned by `config/headcount.php`, which Craft applies over whatever the
+     * control panel saved — so the settings screens show them as read-only.
+     *
+     * Mounted under a host, the host's config is what overrides, and it doesn't say which
+     * keys, so nothing is reported.
+     *
+     * @return string[]
+     */
+    public function getOverriddenSettings(): array
+    {
+        if ($this->settingsSaver !== null) {
+            return [];
+        }
+
+        $config = Craft::$app->getConfig()->getConfigFromFile($this->handle);
+
+        return array_keys(array_intersect_key($config, $this->getSettings()->getAttributes()));
+    }
+
     public function getCpNavItem(): ?array
     {
         $item = parent::getCpNavItem();

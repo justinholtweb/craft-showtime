@@ -1,52 +1,60 @@
 {% import '_includes/forms' as forms %}
+{% from 'headcount/settings/_macros' import configWarning %}
 {% set readOnly = readOnly ?? false %}
+{% set overrides = craft.headcount.plugin.overriddenSettings %}
 
 {{ forms.textField({
-    disabled: readOnly,
+    disabled: readOnly or 'defaultCurrency' in overrides,
     label: 'Default Currency'|t('headcount'),
     instructions: 'Three-letter currency code (e.g., USD, EUR, GBP).'|t('headcount'),
     name: 'defaultCurrency',
     value: settings.defaultCurrency,
     size: 3,
     maxlength: 3,
+    warning: 'defaultCurrency' in overrides ? configWarning('defaultCurrency'),
 }) }}
 
 {{ forms.textField({
-    disabled: readOnly,
+    disabled: readOnly or 'checkoutSuccessUrl' in overrides,
     label: 'Checkout Success URL'|t('headcount'),
     instructions: 'Relative URL to redirect after successful checkout.'|t('headcount'),
     name: 'checkoutSuccessUrl',
     value: settings.checkoutSuccessUrl,
+    warning: 'checkoutSuccessUrl' in overrides ? configWarning('checkoutSuccessUrl'),
 }) }}
 
 {{ forms.textField({
-    disabled: readOnly,
+    disabled: readOnly or 'checkoutCancelUrl' in overrides,
     label: 'Checkout Cancel URL'|t('headcount'),
     instructions: 'Relative URL to redirect when checkout is canceled.'|t('headcount'),
     name: 'checkoutCancelUrl',
     value: settings.checkoutCancelUrl,
+    warning: 'checkoutCancelUrl' in overrides ? configWarning('checkoutCancelUrl'),
 }) }}
 
 {{ forms.textField({
-    disabled: readOnly,
+    disabled: readOnly or 'loginUrl' in overrides,
     label: 'Login URL'|t('headcount'),
     instructions: 'Relative URL of your login page.'|t('headcount'),
     name: 'loginUrl',
     value: settings.loginUrl,
+    warning: 'loginUrl' in overrides ? configWarning('loginUrl'),
 }) }}
 
 {{ forms.textField({
-    disabled: readOnly,
+    disabled: readOnly or 'pricingUrl' in overrides,
     label: 'Pricing Page URL'|t('headcount'),
     instructions: 'Relative URL of your pricing/plans page.'|t('headcount'),
     name: 'pricingUrl',
     value: settings.pricingUrl,
+    warning: 'pricingUrl' in overrides ? configWarning('pricingUrl'),
 }) }}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'enforceAccessRules' in overrides,
     label: 'Enforce Access Rules'|t('headcount'),
     instructions: 'Apply access rules to front-end requests automatically. Turn this off if your templates already gate content themselves via `craft.headcount.canAccess()` — rules still evaluate, but nothing gets blocked for you.'|t('headcount'),
     name: 'enforceAccessRules',
     on: settings.enforceAccessRules,
+    warning: 'enforceAccessRules' in overrides ? configWarning('enforceAccessRules'),
 }) }}

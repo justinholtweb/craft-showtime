@@ -39,6 +39,7 @@ class PlansController extends Controller
                 }
             } else {
                 $plan = new Plan();
+                $plan->currency = Headcount::getInstance()->getSettings()->getCurrencyCode();
             }
         }
 

@@ -13,6 +13,17 @@
     {{ csrfInput() }}
     {{ redirectInput('headcount/plans/{id}') }}
 
+    {# Some fields sit in a collapsed section, so list every error up top as well. #}
+    {% if plan.hasErrors() %}
+        <div class="error" role="alert" style="margin-bottom: 24px;">
+            <ul class="errors">
+                {% for error in plan.getErrorSummary(true) %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
     {{ forms.textField({
         first: true,
         label: 'Name'|t('headcount'),
@@ -37,6 +48,7 @@
         name: 'description',
         value: plan.description,
         rows: 3,
+        errors: plan.getErrors('description'),
     }) }}
 
     {{ forms.selectField({
@@ -45,6 +57,7 @@
         name: 'userGroupId',
         value: plan.userGroupId,
         options: [{ label: '— Select —', value: '' }]|merge(userGroups|map((name, id) => { label: name, value: id })),
+        errors: plan.getErrors('userGroupId'),
     }) }}
 
     <hr>
@@ -59,6 +72,7 @@
         step: '0.01',
         min: '0',
         required: true,
+        errors: plan.getErrors('price'),
     }) }}
 
     {{ forms.textField({
@@ -68,6 +82,7 @@
         size: 3,
         maxlength: 3,
         required: true,
+        errors: plan.getErrors('currency'),
     }) }}
 
     {{ forms.selectField({
@@ -82,6 +97,7 @@
         ],
         toggle: true,
         targetPrefix: 'term-',
+        errors: plan.getErrors('termType'),
     }) }}
 
     <div id="term-recurring" class="{{ plan.isFixedTerm() ? 'hidden' }}">
@@ -89,6 +105,7 @@
             label: 'Billing Interval'|t('headcount'),
             name: 'billingInterval',
             value: plan.billingInterval,
+            errors: plan.getErrors('billingInterval'),
             options: [
                 { label: 'Day', value: 'day' },
                 { label: 'Week', value: 'week' },
@@ -102,6 +119,7 @@
             instructions: 'e.g., 1 for monthly, 3 for quarterly.'|t('headcount'),
             name: 'billingIntervalCount',
             value: plan.billingIntervalCount,
+            errors: plan.getErrors('billingIntervalCount'),
             type: 'number',
             min: 1,
         }) }}
@@ -111,6 +129,7 @@
             instructions: 'Number of free trial days. 0 for no trial.'|t('headcount'),
             name: 'trialDays',
             value: plan.trialDays,
+            errors: plan.getErrors('trialDays'),
             type: 'number',
             min: 0,
         }) }}
@@ -155,6 +174,7 @@
                 instructions: 'By month, a member joining in October of a July–June season pays nine twelfths — the whole months they can still use. By day is exact to the day, but produces less familiar prices.'|t('headcount'),
                 name: 'prorationBasis',
                 value: plan.prorationBasis,
+                errors: plan.getErrors('prorationBasis'),
                 options: [
                     { label: 'Whole months remaining'|t('headcount'), value: 'month' },
                     { label: 'Days remaining'|t('headcount'), value: 'day' },
@@ -182,6 +202,7 @@
         instructions: 'Leave blank to auto-create on first sync.'|t('headcount'),
         name: 'stripePriceId',
         value: plan.stripePriceId,
+        errors: plan.getErrors('stripePriceId'),
     }) }}
 
     {{ forms.textField({
@@ -189,6 +210,7 @@
         instructions: 'Leave blank to auto-create on first sync.'|t('headcount'),
         name: 'paypalPlanId',
         value: plan.paypalPlanId,
+        errors: plan.getErrors('paypalPlanId'),
     }) }}
 
     <hr>
@@ -201,6 +223,7 @@
         name: 'features',
         value: plan.features ? plan.features|join("\n") : '',
         rows: 5,
+        errors: plan.getErrors('features'),
     }) }}
 
     {{ forms.lightswitchField({

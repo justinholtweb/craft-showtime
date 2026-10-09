@@ -11,7 +11,7 @@
         </div>
         <div class="headcount-card">
             <div class="headcount-card__label">{{ 'Monthly Recurring Revenue'|t('headcount') }}</div>
-            <div class="headcount-card__value">${{ stats.mrr|number_format(2) }}</div>
+            <div class="headcount-card__value">{{ stats.mrr|currency(craft.headcount.currency) }}</div>
         </div>
         <div class="headcount-card">
             <div class="headcount-card__label">{{ 'Churn Rate'|t('headcount') }}</div>
@@ -82,7 +82,7 @@
                         {% if row.revenue > 0 %}
                             <tr>
                                 <td>{{ row.date }}</td>
-                                <td>${{ row.revenue|number_format(2) }}</td>
+                                <td>{{ row.revenue|currency(craft.headcount.currency) }}</td>
                             </tr>
                         {% endif %}
                     {% endfor %}
@@ -112,7 +112,7 @@
                                 {% if coupon.discountType == 'percent' %}
                                     {{ coupon.discountAmount }}%
                                 {% else %}
-                                    ${{ coupon.discountAmount|number_format(2) }}
+                                    {{ coupon.discountAmount|currency(craft.headcount.currency) }}
                                 {% endif %}
                             </td>
                             <td>{{ coupon.currentUses }}{% if coupon.maxUses %} / {{ coupon.maxUses }}{% endif %}</td>

@@ -1,33 +1,38 @@
 {% import '_includes/forms' as forms %}
+{% from 'headcount/settings/_macros' import configWarning %}
 {% set readOnly = readOnly ?? false %}
+{% set overrides = craft.headcount.plugin.overriddenSettings %}
 
 {{ forms.lightswitchField({
-    disabled: readOnly,
+    disabled: readOnly or 'stripeEnabled' in overrides,
     label: 'Enable Stripe'|t('headcount'),
     name: 'stripeEnabled',
     on: settings.stripeEnabled,
+    warning: 'stripeEnabled' in overrides ? configWarning('stripeEnabled'),
 }) }}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'stripeSecretKey' in overrides,
     label: 'Secret Key'|t('headcount'),
     instructions: 'Your Stripe secret key (starts with sk_). Supports environment variables.'|t('headcount'),
     name: 'stripeSecretKey',
     suggestEnvVars: true,
     value: settings.stripeSecretKey,
+    warning: 'stripeSecretKey' in overrides ? configWarning('stripeSecretKey'),
 }) }}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'stripePublishableKey' in overrides,
     label: 'Publishable Key'|t('headcount'),
     instructions: 'Your Stripe publishable key (starts with pk_). Supports environment variables.'|t('headcount'),
     name: 'stripePublishableKey',
     suggestEnvVars: true,
     value: settings.stripePublishableKey,
+    warning: 'stripePublishableKey' in overrides ? configWarning('stripePublishableKey'),
 }) }}
 
 {{ forms.autosuggestField({
-    disabled: readOnly,
+    disabled: readOnly or 'stripeWebhookSecret' in overrides,
     label: 'Webhook Signing Secret'|t('headcount'),
     instructions: 'Webhook signing secret (starts with whsec_). Supports environment variables.'|t('headcount'),
     name: 'stripeWebhookSecret',
@@ -35,5 +40,5 @@
     value: settings.stripeWebhookSecret,
     warning: settings.stripeEnabled and not settings.secretIsSet('stripeWebhookSecret')
         ? 'Stripe webhooks are refused until a signing secret is set — without one they can’t be verified. Memberships won’t activate, renew or cancel from Stripe events.'|t('headcount')
-        : null,
+        : ('stripeWebhookSecret' in overrides ? configWarning('stripeWebhookSecret')),
 }) }}
