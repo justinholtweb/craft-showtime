@@ -61,4 +61,6 @@ return [
     'Handles must start with a letter and contain only letters, numbers, hyphens and underscores.' => 'Handles must start with a letter and contain only letters, numbers, hyphens and underscores.',
     'A plan with this handle already exists.' => 'A plan with this handle already exists.',
     'This is being overridden by the `{setting}` setting in `config/headcount.php`.' => 'This is being overridden by the `{setting}` setting in `config/headcount.php`.',
+    'Query for membership plans' => 'Query for membership plans',
+    'Query for the current user’s membership and access checks' => 'Query for the current user’s membership and access checks',
 ];

@@ -7,6 +7,7 @@ use craft\elements\User;
 use craft\web\Controller;
 use justinholtweb\headcount\elements\Subscription;
 use justinholtweb\headcount\Headcount;
+use justinholtweb\headcount\helpers\Payload;
 use justinholtweb\headcount\models\Settings;
 use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
@@ -60,29 +61,7 @@ class ApiController extends Controller
     {
         $plans = Headcount::getInstance()->plans->getAllPlans(true);
 
-        $data = array_map(function($plan) {
-            // The season the plan is currently selling, not the term a member joining right
-            // now would get — those differ mid-season, and a client showing "Season: X to Y"
-            // means the former. What today's joiner would pay is `currentPrice`.
-            $window = $plan->getSeasonWindow();
-
-            return [
-                'id' => $plan->id,
-                'name' => $plan->name,
-                'handle' => $plan->handle,
-                'description' => $plan->description,
-                'price' => $plan->price,
-                'currency' => $plan->currency,
-                'billingInterval' => $plan->billingInterval,
-                'billingIntervalCount' => $plan->billingIntervalCount,
-                'termType' => $plan->termType,
-                'seasonStart' => $window ? $window['start']->format(\DateTimeInterface::ATOM) : null,
-                'seasonEnd' => $window ? $window['end']->format(\DateTimeInterface::ATOM) : null,
-                'currentPrice' => $plan->getProratedPrice(),
-                'trialDays' => $plan->trialDays,
-                'features' => $plan->features,
-            ];
-        }, $plans);
+        $data = array_map(fn($plan) => Payload::plan($plan), $plans);
 
         return $this->asJson(['plans' => array_values($data)]);
     }
@@ -99,20 +78,7 @@ class ApiController extends Controller
             return $this->asJson(['error' => 'Plan not found'])->setStatusCode(404);
         }
 
-        return $this->asJson([
-            'plan' => [
-                'id' => $plan->id,
-                'name' => $plan->name,
-                'handle' => $plan->handle,
-                'description' => $plan->description,
-                'price' => $plan->price,
-                'currency' => $plan->currency,
-                'billingInterval' => $plan->billingInterval,
-                'billingIntervalCount' => $plan->billingIntervalCount,
-                'trialDays' => $plan->trialDays,
-                'features' => $plan->features,
-            ],
-        ]);
+        return $this->asJson(['plan' => Payload::plan($plan)]);
     }
 
     /**
@@ -332,23 +298,6 @@ class ApiController extends Controller
 
     private function _serializeSubscription(Subscription $subscription): array
     {
-        $plan = $subscription->getPlan();
-
-        return [
-            'id' => $subscription->id,
-            'planId' => $subscription->planId,
-            'planHandle' => $plan?->handle,
-            'planName' => $plan?->name,
-            'gateway' => $subscription->gateway,
-            'status' => $subscription->status,
-            'amount' => $subscription->amount,
-            'currency' => $subscription->currency,
-            'startDate' => $subscription->startDate?->format('c'),
-            'endDate' => $subscription->endDate?->format('c'),
-            'trialEndDate' => $subscription->trialEndDate?->format('c'),
-            'cancelAtPeriodEnd' => $subscription->cancelAtPeriodEnd,
-            'canceledAt' => $subscription->canceledAt?->format('c'),
-            'dateCreated' => $subscription->dateCreated?->format('c'),
-        ];
+        return Payload::subscription($subscription);
     }
 }

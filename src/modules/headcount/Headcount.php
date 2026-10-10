@@ -7,12 +7,16 @@ use craft\base\ElementInterface;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\AuthorizationCheckEvent;
+use craft\events\ExecuteGqlQueryEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterEmailMessagesEvent;
+use craft\events\RegisterGqlQueriesEvent;
+use craft\events\RegisterGqlSchemaComponentsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\services\Dashboard;
 use craft\services\Elements;
+use craft\services\Gql;
 use craft\services\SystemMessages;
 use craft\services\UserPermissions;
 use craft\web\Application;
@@ -21,6 +25,7 @@ use craft\web\UrlManager;
 use craft\web\View;
 use justinholtweb\headcount\assets\HeadcountAsset;
 use justinholtweb\headcount\elements\Subscription;
+use justinholtweb\headcount\gql\queries\HeadcountQueries;
 use justinholtweb\headcount\models\Settings;
 use justinholtweb\headcount\services\ApplePass;
 use justinholtweb\headcount\services\ApplePush;
@@ -104,6 +109,13 @@ class Headcount extends Plugin
      */
     public $stripeWebhookRouter = null;
 
+    /**
+     * `enableGraphqlCaching` values to put back after each Headcount GraphQL query.
+     *
+     * @var bool[]
+     */
+    private array $_gqlCachingStack = [];
+
     public static function config(): array
     {
         return [
@@ -154,6 +166,7 @@ class Headcount extends Plugin
         $this->_registerContentGating();
         $this->_registerTemplateHooks();
         $this->_registerCpAssets();
+        $this->_registerGraphQl();
     }
 
     /**
@@ -563,6 +576,80 @@ class Headcount extends Plugin
                 }
             }
         );
+    }
+
+    /**
+     * Read-only GraphQL: `headcountPlans`/`headcountPlan` behind `headcount.plans:read`, and
+     * `headcountMembership`/`headcountAccess` behind `headcount.membership:read`.
+     *
+     * Registered in both modes — mounted under Showtime the schema components still read
+     * "Headcount", because a schema is scoped to what a query can see, not to a plugin.
+     */
+    private function _registerGraphQl(): void
+    {
+        Event::on(
+            Gql::class,
+            Gql::EVENT_REGISTER_GQL_QUERIES,
+            function(RegisterGqlQueriesEvent $event) {
+                $event->queries = array_merge($event->queries, HeadcountQueries::getQueries());
+            }
+        );
+
+        Event::on(
+            Gql::class,
+            Gql::EVENT_REGISTER_GQL_SCHEMA_COMPONENTS,
+            function(RegisterGqlSchemaComponentsEvent $event) {
+                $event->queries[Craft::t('headcount', 'Headcount')] = [
+                    'headcount.plans:read' => ['label' => Craft::t('headcount', 'Query for membership plans')],
+                    'headcount.membership:read' => ['label' => Craft::t('headcount', 'Query for the current user’s membership and access checks')],
+                ];
+            }
+        );
+
+        // Craft caches a GraphQL result by schema, query and variables — not by who asked.
+        // A membership or gate answer cached for one member would be served to the next, and
+        // a plan's prorated price changes with the date, so a query that touches Headcount is
+        // run uncached. The setting is restored once the query has run.
+        Event::on(
+            Gql::class,
+            Gql::EVENT_BEFORE_EXECUTE_GQL_QUERY,
+            function(ExecuteGqlQueryEvent $event) {
+                if (!self::queryTouchesHeadcount($event->query)) {
+                    return;
+                }
+
+                $generalConfig = Craft::$app->getConfig()->getGeneral();
+                $this->_gqlCachingStack[] = $generalConfig->enableGraphqlCaching;
+                $generalConfig->enableGraphqlCaching = false;
+            }
+        );
+
+        Event::on(
+            Gql::class,
+            Gql::EVENT_AFTER_EXECUTE_GQL_QUERY,
+            function(ExecuteGqlQueryEvent $event) {
+                if ($this->_gqlCachingStack === [] || !self::queryTouchesHeadcount($event->query)) {
+                    return;
+                }
+
+                Craft::$app->getConfig()->getGeneral()->enableGraphqlCaching = array_pop($this->_gqlCachingStack);
+            }
+        );
+    }
+
+    /**
+     * Whether a GraphQL document asks for one of Headcount's root fields. A field can be
+     * aliased but never renamed, so its name is always in the text.
+     */
+    public static function queryTouchesHeadcount(string $query): bool
+    {
+        foreach (HeadcountQueries::FIELDS as $field) {
+            if (preg_match('/\b' . $field . '\b/', $query)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function _registerCpAssets(): void
