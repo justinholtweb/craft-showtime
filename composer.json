@@ -2,7 +2,7 @@
     "name": "justinholtweb/craft-showtime",
     "description": "Showtime \u2014 events, bookings, and memberships for Craft CMS in one plugin",
     "type": "craft-plugin",
-    "version": "5.5.0",
+    "version": "5.5.1",
     "keywords": [
         "craft",
         "cms",
@@ -38,6 +38,12 @@
         "craftcms/phpstan": "dev-main",
         "craftcms/commerce": "^5.0",
         "phpstan/phpstan": "^1.12 || ^2.2"
+    },
+    "comment-conflict": "The standalone packages share the module namespaces below, so with both in vendor/ Composer loads each class from whichever copy it finds first.",
+    "conflict": {
+        "justinholtweb/craft-stub": "*",
+        "justinholtweb/craft-headcount": "*",
+        "justinholtweb/craft-owl": "*"
     },
     "suggest": {
         "craftcms/commerce": "Required for Owl's Commerce ticketing features (^5.0)."

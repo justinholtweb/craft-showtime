@@ -640,6 +640,11 @@ class Plugin extends BasePlugin
      * The track deliberately matches the standalone plugin's (`plugin:<handle>`), so a
      * site that adopts Showtime after running the standalone keeps its migration history
      * and its data.
+     *
+     * The path is the vendored copy's, never `$module->getBasePath()`: that follows wherever
+     * the plugin class autoloaded from, and with the standalone package also in `vendor/` it
+     * pointed at the standalone's migrations, so a sync migration found nothing to run and was
+     * recorded as applied anyway.
      */
     private function setMigrator(BasePlugin $module, string $handle): void
     {
@@ -649,7 +654,7 @@ class Plugin extends BasePlugin
             'class' => MigrationManager::class,
             'track' => "plugin:$handle",
             'migrationNamespace' => ($namespace ? $namespace . '\\' : '') . 'migrations',
-            'migrationPath' => $module->getBasePath() . DIRECTORY_SEPARATOR . 'migrations',
+            'migrationPath' => implode(DIRECTORY_SEPARATOR, [__DIR__, 'modules', $handle, 'migrations']),
         ]);
     }
 }

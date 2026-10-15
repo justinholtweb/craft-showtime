@@ -1,5 +1,20 @@
 # Release Notes for Showtime
 
+## 5.5.1 - 2026-10-15
+
+Bundles Stub 5.9.1.
+
+### Fixed
+
+- Showtime can no longer be installed alongside the standalone `craft-stub`, `craft-headcount` or
+  `craft-owl` packages. They share namespaces with Showtime's bundled copies, so with both present
+  Composer loaded a mix of the two versions, class by class. Remove the standalone package from
+  `composer.json` before updating. ([#2](https://github.com/justinholtweb/craft-showtime/issues/2))
+- Module migrations always run from Showtime's bundled copy. With a standalone package present they
+  ran from that package's folder instead, so a sync migration could be recorded as applied without
+  changing the schema. A site that had both installed should run `php craft showtime/migrate/all`
+  after updating. ([#2](https://github.com/justinholtweb/craft-showtime/issues/2))
+
 ## 5.5.0 - 2026-10-10
 Bundles Headcount 5.4.0.
 
