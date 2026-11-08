@@ -24,7 +24,7 @@ class Webhooks extends Component
      * Handler results for events that aren't Headcount's to act on — a Checkout session some
      * other integration on the same Stripe account created, say.
      */
-    public const IGNORED_RESULTS = ['ignored', 'missing_metadata', 'incomplete'];
+    public const IGNORED_RESULTS = ['ignored', 'missing_metadata', 'incomplete', 'unpaid'];
 
     private const CACHE_REJECTED = 'headcount:webhook-rejected:';
     private const CACHE_FALLBACK = 'headcount:checkout-fallback';
@@ -66,6 +66,7 @@ class Webhooks extends Component
         try {
             $result = match ($event->type) {
                 'checkout.session.completed' => $this->_handleCheckoutCompleted($event),
+                'checkout.session.async_payment_succeeded' => $this->_handleCheckoutCompleted($event),
                 'customer.subscription.created' => $this->_handleSubscriptionCreated($event),
                 'customer.subscription.updated' => $this->_handleSubscriptionUpdated($event),
                 'customer.subscription.deleted' => $this->_handleSubscriptionDeleted($event),
@@ -155,8 +156,10 @@ class Webhooks extends Component
     public function getHealth(string $gateway = 'stripe'): array
     {
         /** @var WebhookLogRecord|null $latest */
+        // Headcount's own checkout markers live in this table too; they aren't webhooks.
         $latest = WebhookLogRecord::find()
             ->where(['gateway' => $gateway])
+            ->andWhere(['not', ['eventType' => Subscriptions::CHECKOUT_RECORDED]])
             ->orderBy(['dateCreated' => SORT_DESC, 'id' => SORT_DESC])
             ->one();
 

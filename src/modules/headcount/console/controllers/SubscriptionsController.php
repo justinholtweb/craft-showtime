@@ -73,7 +73,9 @@ class SubscriptionsController extends Controller
                 $label = "  {$session->id} (user #{$userId}, plan #{$session->metadata->plan_id})";
 
                 if ($this->dryRun) {
-                    $result = $headcount->subscriptions->getSubscriptionForCheckoutSession($session) ? 'already_exists' : 'would_create';
+                    $recorded = $headcount->subscriptions->isCheckoutSessionRecorded($session->id)
+                        || $headcount->subscriptions->getSubscriptionForCheckoutSession($session);
+                    $result = $recorded ? 'already_exists' : 'would_create';
                 } else {
                     try {
                         $result = $headcount->subscriptions->createFromStripeCheckoutSession($session, !$this->skipEmails);

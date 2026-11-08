@@ -12,6 +12,12 @@ class CheckoutController extends Controller
 {
     protected array|int|bool $allowAnonymous = ['success', 'cancel'];
 
+    /**
+     * How long after a checkout opened its return URL may still record it (Stripe expires an
+     * unfinished session after 24 hours at most).
+     */
+    private const RETURN_WINDOW = 86400;
+
     public function actionCreateSession(): ?Response
     {
         $this->requirePostRequest();
@@ -72,7 +78,15 @@ class CheckoutController extends Controller
         if (preg_match('/^cs_(test|live)_[A-Za-z0-9]+$/', $sessionId)) {
             try {
                 $session = $headcount->stripe->getCheckoutSession($sessionId);
-                $result = $headcount->subscriptions->createFromStripeCheckoutSession($session);
+
+                // Only the member who paid, and only on the way back from paying. The URL stays
+                // in their history; it is not a standing way to re-create a membership. Anything
+                // else is left to the webhook.
+                $ownerId = (int)($session->metadata->craft_user_id ?? $session->client_reference_id ?? 0);
+                $isFresh = (int)($session->created ?? 0) > time() - self::RETURN_WINDOW;
+                $result = $ownerId !== 0 && $ownerId === (int)Craft::$app->getUser()->getId() && $isFresh
+                    ? $headcount->subscriptions->createFromStripeCheckoutSession($session)
+                    : 'not_owner';
 
                 if ($result === 'processed') {
                     $headcount->webhooks->recordCheckoutFallback();

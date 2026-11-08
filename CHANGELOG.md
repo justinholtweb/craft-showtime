@@ -1,5 +1,21 @@
 # Release Notes for Showtime
 
+## 5.5.3 - 2026-11-08
+
+Bundles Headcount 5.4.2.
+
+### Security
+
+- **Headcount: delayed payments no longer grant access before the money arrives.** A bank debit or
+  other delayed method completes Stripe Checkout while the payment is still pending. A season
+  membership was activated at that point, and stayed active if the payment later failed. Headcount
+  now waits for `checkout.session.async_payment_succeeded`, which needs adding to your Stripe
+  webhook's events.
+- **Headcount: a deleted subscription can't be brought back from its checkout.** Reloading the
+  checkout return URL, or running `import`, re-created a subscription an admin had deleted. Every
+  checkout Headcount turns into a subscription is now recorded permanently, and the checkout return
+  only records a signup for the logged-in member who paid, within a day of checkout.
+
 ## 5.5.2 - 2026-11-08
 
 Bundles Headcount 5.4.1.

@@ -9,6 +9,7 @@ use justinholtweb\headcount\elements\Subscription;
 use justinholtweb\headcount\events\SubscriptionEvent;
 use justinholtweb\headcount\Headcount;
 use justinholtweb\headcount\models\Plan;
+use justinholtweb\headcount\records\WebhookLogRecord;
 use Stripe\StripeObject;
 use yii\base\Component;
 
@@ -20,6 +21,12 @@ class Subscriptions extends Component
     public const EVENT_AFTER_UPDATE_SUBSCRIPTION = 'afterUpdateSubscription';
     public const EVENT_BEFORE_CANCEL_SUBSCRIPTION = 'beforeCancelSubscription';
     public const EVENT_AFTER_CANCEL_SUBSCRIPTION = 'afterCancelSubscription';
+
+    /**
+     * Webhook-log event type marking a Checkout session as turned into a subscription. Its
+     * `eventId` is the session id. See {@see isCheckoutSessionRecorded()}.
+     */
+    public const CHECKOUT_RECORDED = 'headcount.checkout.recorded';
 
     public function createSubscription(array $attributes): ?Subscription
     {
@@ -74,7 +81,8 @@ class Subscriptions extends Component
      * it. A mutex keeps two of them arriving together from creating it twice.
      *
      * Returns the outcome: `processed`, `already_exists`, `missing_metadata` (not a Headcount
-     * checkout), `incomplete` (not paid for yet), `plan_not_found`, `locked` or `failed`.
+     * checkout), `incomplete` (not finished), `unpaid` (finished, payment still pending),
+     * `plan_not_found`, `locked` or `failed`.
      */
     public function createFromStripeCheckoutSession(StripeObject $session, bool $sendEmail = true): string
     {
@@ -89,6 +97,13 @@ class Subscriptions extends Component
             return 'incomplete';
         }
 
+        // A bank debit or other delayed method completes Checkout before the money arrives.
+        // Nothing is granted until it does: `checkout.session.async_payment_succeeded` brings
+        // the session back here as `paid`.
+        if (($session->payment_status ?? null) === 'unpaid') {
+            return 'unpaid';
+        }
+
         $mutex = Craft::$app->getMutex();
         $lock = 'headcount:checkout:' . $session->id;
 
@@ -97,7 +112,7 @@ class Subscriptions extends Component
         }
 
         try {
-            if ($this->getSubscriptionForCheckoutSession($session)) {
+            if ($this->isCheckoutSessionRecorded($session->id) || $this->getSubscriptionForCheckoutSession($session)) {
                 return 'already_exists';
             }
 
@@ -162,6 +177,8 @@ class Subscriptions extends Component
                 return 'failed';
             }
 
+            $this->_markCheckoutSessionRecorded($session->id, $subscription->id);
+
             if ($sendEmail) {
                 Headcount::getInstance()->emails->sendWelcomeEmail($subscription);
             }
@@ -178,6 +195,32 @@ class Subscriptions extends Component
      * A recurring checkout is found by its Stripe subscription id. A season checkout has no
      * Stripe subscription, so it is found by the session id stored in its metadata.
      */
+    /**
+     * Whether a Checkout session has already been turned into a subscription, even if that
+     * subscription has since been deleted.
+     *
+     * Deleting a subscription removes its row, so the subscription itself can't answer this.
+     * Without a lasting record, a member whose subscription an admin deleted could get it
+     * back by reloading the checkout return URL, and `import` would bring it back too.
+     */
+    public function isCheckoutSessionRecorded(string $sessionId): bool
+    {
+        return WebhookLogRecord::find()
+            ->where(['gateway' => 'stripe', 'eventId' => $sessionId, 'eventType' => self::CHECKOUT_RECORDED])
+            ->exists();
+    }
+
+    private function _markCheckoutSessionRecorded(string $sessionId, int $subscriptionId): void
+    {
+        $record = new WebhookLogRecord();
+        $record->gateway = 'stripe';
+        $record->eventId = $sessionId;
+        $record->eventType = self::CHECKOUT_RECORDED;
+        $record->payload = json_encode(['subscriptionId' => $subscriptionId]);
+        $record->status = 'processed';
+        $record->save();
+    }
+
     public function getSubscriptionForCheckoutSession(StripeObject $session): ?Subscription
     {
         $stripeSubId = $session->subscription ?? null;
