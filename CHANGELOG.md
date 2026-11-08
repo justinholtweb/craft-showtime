@@ -1,5 +1,31 @@
 # Release Notes for Showtime
 
+## 5.5.2 - 2026-11-08
+
+Bundles Headcount 5.4.1.
+
+### Added
+
+- **Headcount: signups are recorded when the member returns from Stripe Checkout**, not only when
+  the webhook arrives. Stripe now returns members to `actions/headcount/checkout/success`, which
+  records the subscription, adds the user group and forwards to `checkoutSuccessUrl` with the same
+  `session_id`. Whichever of the return and the webhook gets there first creates the subscription.
+- **Headcount: `php craft headcount/subscriptions/import`** creates subscriptions for completed
+  Stripe checkouts Headcount never recorded, using their current Stripe status. It looks back 90 days
+  by default (`--days`), and takes `--dry-run` and `--skip-emails`. Running it again creates nothing
+  new.
+- **Headcount: webhook status under Settings → Stripe**, plus a control panel alert when Stripe
+  webhooks are being rejected, the last one failed, or a signup goes 15 minutes without a webhook
+  after it. Rejections at the bundle's shared endpoint, `/actions/showtime/webhook/stripe`, are
+  reported too.
+
+### Fixed
+
+- **A membership webhook that couldn't be applied was answered with a 200.** A checkout for a
+  deleted plan, or one whose subscription couldn't be saved, was logged as processed, so Stripe
+  never retried and nothing showed in the logs. Both the shared endpoint and Headcount's own now log
+  it as failed and answer with an error so Stripe retries.
+
 ## 5.5.1 - 2026-10-15
 
 Bundles Stub 5.9.1.

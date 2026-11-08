@@ -4,6 +4,7 @@ namespace justinholtweb\headcount\services;
 
 use Craft;
 use craft\helpers\DateTimeHelper;
+use craft\helpers\Html;
 use justinholtweb\headcount\elements\Subscription;
 use justinholtweb\headcount\Headcount;
 use justinholtweb\headcount\jobs\SendOutgoingWebhook;
@@ -13,6 +14,22 @@ use yii\base\Component;
 
 class Webhooks extends Component
 {
+    /**
+     * Handler results that mean the event wasn't applied. Logged as `failed`, and answered
+     * with an error so Stripe retries.
+     */
+    public const FAILED_RESULTS = ['failed', 'plan_not_found', 'locked'];
+
+    /**
+     * Handler results for events that aren't Headcount's to act on — a Checkout session some
+     * other integration on the same Stripe account created, say.
+     */
+    public const IGNORED_RESULTS = ['ignored', 'missing_metadata', 'incomplete'];
+
+    private const CACHE_REJECTED = 'headcount:webhook-rejected:';
+    private const CACHE_FALLBACK = 'headcount:checkout-fallback';
+    private const FALLBACK_GRACE = 15 * 60;
+
     /**
      * Queue a signed outgoing webhook for the configured endpoint.
      * No-op when no outgoing webhook URL is set.
@@ -59,7 +76,13 @@ class Webhooks extends Component
                 default => 'ignored',
             };
 
-            $log->status = $result === 'ignored' ? 'ignored' : 'processed';
+            $log->status = $this->logStatusFor($result);
+
+            if ($log->status === 'failed') {
+                $log->error = "The {$event->type} handler returned \"{$result}\".";
+                Craft::error("Stripe webhook {$event->id} ({$event->type}) failed: {$result}", 'headcount');
+            }
+
             $log->save();
 
             return $result;
@@ -71,6 +94,142 @@ class Webhooks extends Component
             Craft::error('Stripe webhook processing failed: ' . $e->getMessage(), 'headcount');
             return 'failed';
         }
+    }
+
+    /**
+     * Whether a handler result means the event wasn't dealt with and Stripe should retry.
+     *
+     * Until 5.4.1 everything but `ignored` was logged as processed, so a checkout that
+     * couldn't become a subscription answered Stripe with a 200, was never retried, and left
+     * nothing in the logs.
+     */
+    public function isFailure(string $result): bool
+    {
+        return in_array($result, self::FAILED_RESULTS, true);
+    }
+
+    /**
+     * How a handler result is recorded in the webhook log.
+     */
+    public function logStatusFor(string $result): string
+    {
+        if ($this->isFailure($result)) {
+            return 'failed';
+        }
+
+        return in_array($result, self::IGNORED_RESULTS, true) ? 'ignored' : 'processed';
+    }
+
+    /**
+     * Note a webhook that was refused before it could be logged — a bad or missing
+     * signature. Those never reach `headcount_webhook_logs`, so without this the only trace
+     * of a mis-set signing secret is one line in the web log.
+     */
+    public function recordRejection(string $gateway, string $reason): void
+    {
+        Craft::$app->getCache()->set(self::CACHE_REJECTED . $gateway, [
+            'time' => time(),
+            'reason' => $reason,
+        ], 60 * 60 * 24 * 30);
+    }
+
+    /**
+     * Note that a signup was created from the checkout return rather than a webhook. If no
+     * webhook follows it, Stripe isn't reaching the site.
+     */
+    public function recordCheckoutFallback(): void
+    {
+        Craft::$app->getCache()->set(self::CACHE_FALLBACK, time(), 60 * 60 * 24 * 30);
+    }
+
+    /**
+     * What the site knows about incoming webhooks for a gateway.
+     *
+     * @return array{
+     *     lastReceived: ?\DateTime,
+     *     lastFailed: ?array{time: \DateTime, eventType: string, error: string},
+     *     lastRejected: ?array{time: \DateTime, reason: string},
+     *     lastFallback: ?\DateTime,
+     * }
+     */
+    public function getHealth(string $gateway = 'stripe'): array
+    {
+        /** @var WebhookLogRecord|null $latest */
+        $latest = WebhookLogRecord::find()
+            ->where(['gateway' => $gateway])
+            ->orderBy(['dateCreated' => SORT_DESC, 'id' => SORT_DESC])
+            ->one();
+
+        $lastFailed = null;
+
+        if ($latest && $latest->status === 'failed') {
+            $lastFailed = [
+                'time' => DateTimeHelper::toDateTime($latest->dateCreated) ?: null,
+                'eventType' => (string)$latest->eventType,
+                'error' => (string)$latest->error,
+            ];
+        }
+
+        $cache = Craft::$app->getCache();
+        $rejected = $cache->get(self::CACHE_REJECTED . $gateway);
+        $fallback = $gateway === 'stripe' ? $cache->get(self::CACHE_FALLBACK) : false;
+
+        return [
+            'lastReceived' => $latest ? (DateTimeHelper::toDateTime($latest->dateCreated) ?: null) : null,
+            'lastFailed' => $lastFailed,
+            'lastRejected' => is_array($rejected) ? [
+                'time' => DateTimeHelper::toDateTime($rejected['time']) ?: null,
+                'reason' => (string)$rejected['reason'],
+            ] : null,
+            'lastFallback' => $fallback ? (DateTimeHelper::toDateTime($fallback) ?: null) : null,
+        ];
+    }
+
+    /**
+     * Problems worth interrupting a control panel user for, as HTML-safe sentences.
+     *
+     * @return string[]
+     */
+    public function getStripeProblems(): array
+    {
+        $settings = Headcount::getInstance()->getSettings();
+
+        if (!$settings->stripeEnabled) {
+            return [];
+        }
+
+        // Mounted in a host bundle, the host verifies webhooks with its own (possibly shared)
+        // secret, so Headcount's own field being empty means nothing.
+        if (Headcount::getInstance()->stripeWebhookRouter === null && !$settings->secretIsSet('stripeWebhookSecret')) {
+            return [Craft::t('headcount', 'Stripe webhooks are refused because no signing secret is set. New memberships won’t activate and cancellations won’t be applied.')];
+        }
+
+        $health = $this->getHealth('stripe');
+        $received = $health['lastReceived']?->getTimestamp() ?? 0;
+        $problems = [];
+
+        if ($health['lastRejected'] && $health['lastRejected']['time']->getTimestamp() > $received) {
+            $problems[] = Craft::t('headcount', 'Stripe webhooks are being rejected ({reason}). Check that the signing secret matches the endpoint in Stripe — sandboxes, test mode and live mode each have their own.', [
+                'reason' => Html::encode($health['lastRejected']['reason']),
+            ]);
+        }
+
+        // The webhook for a checkout normally lands within seconds of the member coming back.
+        // A quarter of an hour of silence after one means Stripe isn't reaching this site.
+        $fallback = $health['lastFallback']?->getTimestamp();
+
+        if ($fallback && $received < $fallback && time() - $fallback > self::FALLBACK_GRACE) {
+            $problems[] = Craft::t('headcount', 'A member checked out with Stripe, but no Stripe webhook has arrived since. Check the webhook endpoint in your Stripe dashboard — renewals, failed payments and cancellations won’t reach Headcount until it does.');
+        }
+
+        if ($health['lastFailed']) {
+            $problems[] = Craft::t('headcount', 'The last Stripe webhook ({type}) failed: {error}', [
+                'type' => Html::encode($health['lastFailed']['eventType']),
+                'error' => Html::encode($health['lastFailed']['error']),
+            ]);
+        }
+
+        return $problems;
     }
 
     public function processPayPalEvent(array $data): string
@@ -101,7 +260,7 @@ class Webhooks extends Component
                 default => 'ignored',
             };
 
-            $log->status = $result === 'ignored' ? 'ignored' : 'processed';
+            $log->status = $this->logStatusFor($result);
             $log->save();
 
             return $result;
@@ -119,73 +278,7 @@ class Webhooks extends Component
 
     private function _handleCheckoutCompleted(\Stripe\Event $event): string
     {
-        $session = $event->data->object;
-        $userId = (int)($session->metadata->craft_user_id ?? $session->client_reference_id ?? 0);
-        $planId = (int)($session->metadata->plan_id ?? 0);
-
-        if (!$userId || !$planId) {
-            return 'missing_metadata';
-        }
-
-        // Check if subscription already exists
-        $stripeSubId = $session->subscription ?? null;
-        if ($stripeSubId) {
-            $existing = Headcount::getInstance()->subscriptions->getSubscriptionByGatewayId($stripeSubId);
-            if ($existing) {
-                return 'already_exists';
-            }
-        }
-
-        $plan = Headcount::getInstance()->plans->getPlanById($planId);
-        if (!$plan) {
-            return 'plan_not_found';
-        }
-
-        // Get full subscription details from Stripe
-        $stripeSubscription = null;
-        if ($stripeSubId) {
-            $stripeSubscription = Headcount::getInstance()->stripe->getSubscription($stripeSubId);
-        }
-
-        // A season membership is a one-off payment, so there is no Stripe subscription to
-        // read a period from. The window was fixed when checkout opened and travels in the
-        // session metadata; the amount comes from the session because pro-rata and any
-        // promotion code both mean the member paid something other than the list price.
-        $isFixedTerm = $plan->isFixedTerm() && !$stripeSubId;
-        $termStart = $isFixedTerm ? ($session->metadata->term_start ?? null) : null;
-        $termEnd = $isFixedTerm ? ($session->metadata->term_end ?? null) : null;
-
-        $subscription = Headcount::getInstance()->subscriptions->createSubscription([
-            'userId' => $userId,
-            'planId' => $planId,
-            'gateway' => 'stripe',
-            'gatewaySubscriptionId' => $stripeSubId,
-            'gatewayCustomerId' => $session->customer ?? null,
-            'status' => $this->_mapStripeStatus($stripeSubscription->status ?? 'active'),
-            'startDate' => $stripeSubscription
-                ? $stripeSubscription->current_period_start
-                : ($termStart ?: time()),
-            'endDate' => $stripeSubscription
-                ? $stripeSubscription->current_period_end
-                : $termEnd,
-            'trialStartDate' => $stripeSubscription?->trial_start,
-            'trialEndDate' => $stripeSubscription?->trial_end,
-            'amount' => $isFixedTerm && isset($session->amount_total)
-                ? $session->amount_total / 100
-                : $plan->price,
-            'currency' => $plan->currency,
-            'metadata' => $isFixedTerm ? [
-                'termType' => Plan::TERM_FIXED,
-                'checkoutSessionId' => $session->id ?? null,
-            ] : null,
-        ]);
-
-        if ($subscription) {
-            // Send welcome email
-            Headcount::getInstance()->emails->sendWelcomeEmail($subscription);
-        }
-
-        return $subscription ? 'processed' : 'failed';
+        return Headcount::getInstance()->subscriptions->createFromStripeCheckoutSession($event->data->object);
     }
 
     private function _handleSubscriptionCreated(\Stripe\Event $event): string
@@ -221,7 +314,7 @@ class Webhooks extends Component
             }
         }
 
-        $newStatus = $this->_mapStripeStatus($stripeSubscription->status);
+        $newStatus = $this->mapStripeStatus($stripeSubscription->status);
         // toDateTime() returns false for an unparseable/missing value; coerce that
         // to null so the ?DateTime property assignment can't throw a TypeError.
         $subscription->endDate = DateTimeHelper::toDateTime($stripeSubscription->current_period_end) ?: null;
@@ -425,7 +518,7 @@ class Webhooks extends Component
         return 'not_found';
     }
 
-    private function _mapStripeStatus(string $stripeStatus): string
+    public function mapStripeStatus(string $stripeStatus): string
     {
         return match ($stripeStatus) {
             'active' => Subscription::STATUS_ACTIVE,

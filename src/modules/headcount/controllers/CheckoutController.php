@@ -3,6 +3,7 @@
 namespace justinholtweb\headcount\controllers;
 
 use Craft;
+use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use justinholtweb\headcount\Headcount;
 use yii\web\Response;
@@ -52,13 +53,45 @@ class CheckoutController extends Controller
         return $this->redirect($session->url);
     }
 
+    /**
+     * Stripe's return from a paid checkout.
+     *
+     * Records the subscription now rather than leaving it all to the webhook, so the member
+     * has access the moment they land, and a webhook that is late, misconfigured or blocked
+     * (basic auth on staging is the usual culprit) doesn't lose the signup. The webhook still
+     * arrives afterwards and finds it already done. Then it forwards to the site's own
+     * success page, `session_id` and all.
+     */
     public function actionSuccess(): Response
     {
-        $sessionId = Craft::$app->getRequest()->getQueryParam('session_id');
+        $sessionId = (string)Craft::$app->getRequest()->getQueryParam('session_id', '');
+        $headcount = Headcount::getInstance();
 
-        return $this->renderTemplate('headcount/checkout/success', [
-            'sessionId' => $sessionId,
-        ]);
+        // Checked before any API call: this action is public, and only a real session id is
+        // worth asking Stripe about.
+        if (preg_match('/^cs_(test|live)_[A-Za-z0-9]+$/', $sessionId)) {
+            try {
+                $session = $headcount->stripe->getCheckoutSession($sessionId);
+                $result = $headcount->subscriptions->createFromStripeCheckoutSession($session);
+
+                if ($result === 'processed') {
+                    $headcount->webhooks->recordCheckoutFallback();
+                } elseif ($headcount->webhooks->isFailure($result)) {
+                    Craft::warning("Checkout session {$sessionId} couldn't be recorded on return: {$result}", 'headcount');
+                }
+            } catch (\Throwable $e) {
+                // The webhook can still do it; the member shouldn't see an error for this.
+                Craft::warning("Checkout session {$sessionId} couldn't be recorded on return: {$e->getMessage()}", 'headcount');
+            }
+        }
+
+        $url = UrlHelper::siteUrl(ltrim($headcount->getSettings()->checkoutSuccessUrl, '/'));
+
+        if ($sessionId !== '') {
+            $url = UrlHelper::urlWithParams($url, ['session_id' => $sessionId]);
+        }
+
+        return $this->redirect($url);
     }
 
     public function actionCancel(): Response

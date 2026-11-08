@@ -32,15 +32,23 @@ class WebhookController extends Controller
             return $this->asJson(['received' => true]);
         }
 
+        $webhooks = Headcount::getInstance()->webhooks;
+
         try {
             $event = Headcount::getInstance()->stripe->verifyWebhookSignature($payload, $sigHeader);
         } catch (\Exception $e) {
             Craft::error('Stripe webhook signature verification failed: ' . $e->getMessage(), 'headcount');
+            $webhooks->recordRejection('stripe', $sigHeader === '' ? 'no signature header' : $e->getMessage());
             return $this->asJson(['error' => 'Invalid signature'])->setStatusCode(400);
         }
 
-        // Process via webhook service
-        $result = Headcount::getInstance()->webhooks->processStripeEvent($event);
+        $result = $webhooks->processStripeEvent($event);
+
+        // A non-2xx makes Stripe retry, and shows the failure on the endpoint's page in the
+        // Stripe dashboard instead of a reassuring 200.
+        if ($webhooks->isFailure($result)) {
+            return $this->asJson(['received' => true, 'result' => $result])->setStatusCode(500);
+        }
 
         return $this->asJson(['received' => true, 'result' => $result]);
     }
@@ -57,6 +65,7 @@ class WebhookController extends Controller
 
         if (!$verified) {
             Craft::error('PayPal webhook verification failed', 'headcount');
+            Headcount::getInstance()->webhooks->recordRejection('paypal', 'verification failed');
             return $this->asJson(['error' => 'Verification failed'])->setStatusCode(400);
         }
 

@@ -74,6 +74,21 @@ class StripeWebhooks extends Component
     }
 
     /**
+     * Tell Headcount a webhook was refused before it could be routed, so its webhook status
+     * and control panel alert show it. Most of the bundle's Stripe traffic is memberships, and
+     * a bad signing secret breaks every module alike.
+     */
+    private function recordRejection(string $reason): void
+    {
+        /** @var \justinholtweb\headcount\Headcount|null $headcount */
+        $headcount = Plugin::getInstance()->getModuleByHandle('headcount');
+
+        if ($headcount !== null) {
+            $headcount->webhooks->recordRejection('stripe', $reason);
+        }
+    }
+
+    /**
      * Verify and dispatch. Returns [handled, module, message].
      *
      * @return array{bool, ?string, string}
@@ -83,6 +98,7 @@ class StripeWebhooks extends Component
         $secret = $this->signingSecret();
 
         if ($secret === '') {
+            $this->recordRejection('no signing secret is configured');
             return [false, null, 'No Stripe webhook signing secret is configured.'];
         }
 
@@ -92,6 +108,7 @@ class StripeWebhooks extends Component
             // Deliberately vague to the caller: a detailed signature error tells an attacker
             // how close they got. The detail goes to the log.
             Craft::warning('Showtime: rejected a Stripe webhook — ' . $e->getMessage(), __METHOD__);
+            $this->recordRejection($sigHeader === '' ? 'no signature header' : $e->getMessage());
             return [false, null, 'Invalid signature.'];
         }
 
@@ -121,9 +138,15 @@ class StripeWebhooks extends Component
                 return [false, $module, 'Memberships module is not mounted.'];
             }
 
-            $result = $headcount->webhooks->processStripeEvent($event);
+            $result = (string)$headcount->webhooks->processStripeEvent($event);
 
-            return [true, $module, (string)$result];
+            // A membership event Headcount couldn't apply — a checkout for a deleted plan,
+            // say — answers non-2xx so Stripe retries and shows it as failed.
+            if ($headcount->webhooks->isFailure($result)) {
+                return [false, $module, $result];
+            }
+
+            return [true, $module, $result];
         } catch (Throwable $e) {
             // Stripe retries on a non-2xx, so a genuine processing failure should surface
             // rather than be swallowed into a 200.

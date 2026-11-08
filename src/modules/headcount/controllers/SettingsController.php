@@ -66,7 +66,12 @@ class SettingsController extends Controller
 
     public function actionStripe(): Response
     {
-        return $this->screen('headcount/settings/stripe');
+        $webhooks = Headcount::getInstance()->webhooks;
+
+        return $this->screen('headcount/settings/stripe', [
+            'webhookHealth' => $webhooks->getHealth('stripe'),
+            'webhookProblems' => $webhooks->getStripeProblems(),
+        ]);
     }
 
     public function actionPaypal(): Response

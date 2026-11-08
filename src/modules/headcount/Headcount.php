@@ -9,11 +9,15 @@ use craft\base\Plugin;
 use craft\events\AuthorizationCheckEvent;
 use craft\events\ExecuteGqlQueryEvent;
 use craft\events\RegisterComponentTypesEvent;
+use craft\events\RegisterCpAlertsEvent;
 use craft\events\RegisterEmailMessagesEvent;
 use craft\events\RegisterGqlQueriesEvent;
 use craft\events\RegisterGqlSchemaComponentsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\helpers\Cp;
+use craft\helpers\Html;
+use craft\helpers\UrlHelper;
 use craft\services\Dashboard;
 use craft\services\Elements;
 use craft\services\Gql;
@@ -167,6 +171,7 @@ class Headcount extends Plugin
         $this->_registerTemplateHooks();
         $this->_registerCpAssets();
         $this->_registerGraphQl();
+        $this->_registerCpAlerts();
     }
 
     /**
@@ -650,6 +655,37 @@ class Headcount extends Plugin
         }
 
         return false;
+    }
+
+    /**
+     * Warn in the control panel when Stripe webhooks aren't getting through. A broken webhook
+     * is otherwise silent: checkout works, the member is charged, and nothing else happens.
+     */
+    private function _registerCpAlerts(): void
+    {
+        Event::on(Cp::class, Cp::EVENT_REGISTER_ALERTS, function(RegisterCpAlertsEvent $event) {
+            $user = Craft::$app->getUser()->getIdentity();
+
+            if (!$user || !$user->can('headcount-manageSubscriptions')) {
+                return;
+            }
+
+            try {
+                $problems = $this->webhooks->getStripeProblems();
+            } catch (\Throwable $e) {
+                // An alert must never be what breaks a control panel page.
+                Craft::warning('Could not check Stripe webhook health: ' . $e->getMessage(), 'headcount');
+                return;
+            }
+
+            foreach ($problems as $problem) {
+                $event->alerts[] = $problem . ' ' . Html::a(
+                    Craft::t('headcount', 'Webhook status'),
+                    UrlHelper::cpUrl('headcount/settings/stripe'),
+                    ['class' => 'go'],
+                );
+            }
+        });
     }
 
     private function _registerCpAssets(): void

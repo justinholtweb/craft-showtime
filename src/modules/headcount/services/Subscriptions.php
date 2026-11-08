@@ -9,6 +9,7 @@ use justinholtweb\headcount\elements\Subscription;
 use justinholtweb\headcount\events\SubscriptionEvent;
 use justinholtweb\headcount\Headcount;
 use justinholtweb\headcount\models\Plan;
+use Stripe\StripeObject;
 use yii\base\Component;
 
 class Subscriptions extends Component
@@ -63,6 +64,150 @@ class Subscriptions extends Component
         $this->_dispatchWebhook('subscription.created', $subscription);
 
         return $subscription;
+    }
+
+    /**
+     * Turn a completed Stripe Checkout session into a subscription, unless one already exists.
+     *
+     * The webhook, the checkout return and `headcount/subscriptions/import` all come through
+     * here, so whichever reaches a session first creates the subscription and the others find
+     * it. A mutex keeps two of them arriving together from creating it twice.
+     *
+     * Returns the outcome: `processed`, `already_exists`, `missing_metadata` (not a Headcount
+     * checkout), `incomplete` (not paid for yet), `plan_not_found`, `locked` or `failed`.
+     */
+    public function createFromStripeCheckoutSession(StripeObject $session, bool $sendEmail = true): string
+    {
+        $userId = (int)($session->metadata->craft_user_id ?? $session->client_reference_id ?? 0);
+        $planId = (int)($session->metadata->plan_id ?? 0);
+
+        if (!$userId || !$planId) {
+            return 'missing_metadata';
+        }
+
+        if (isset($session->status) && $session->status !== 'complete') {
+            return 'incomplete';
+        }
+
+        $mutex = Craft::$app->getMutex();
+        $lock = 'headcount:checkout:' . $session->id;
+
+        if (!$mutex->acquire($lock, 15)) {
+            return 'locked';
+        }
+
+        try {
+            if ($this->getSubscriptionForCheckoutSession($session)) {
+                return 'already_exists';
+            }
+
+            $plan = Headcount::getInstance()->plans->getPlanById($planId);
+            if (!$plan) {
+                return 'plan_not_found';
+            }
+
+            $stripeSubId = $session->subscription ?? null;
+
+            // Expanded, the session carries the subscription object rather than its id.
+            if ($stripeSubId instanceof StripeObject) {
+                $stripeSubId = $stripeSubId->id;
+            }
+
+            $stripeSubscription = $stripeSubId
+                ? Headcount::getInstance()->stripe->getSubscription($stripeSubId)
+                : null;
+
+            // A season membership is a one-off payment, so there is no Stripe subscription to
+            // read a period from. The window was fixed when checkout opened and travels in the
+            // session metadata; the amount comes from the session because pro-rata and any
+            // promotion code both mean the member paid something other than the list price.
+            $isFixedTerm = $plan->isFixedTerm() && !$stripeSubId;
+            $termStart = $isFixedTerm ? ($session->metadata->term_start ?? null) : null;
+            $termEnd = $isFixedTerm ? ($session->metadata->term_end ?? null) : null;
+
+            $customer = $session->customer ?? null;
+            if ($customer instanceof StripeObject) {
+                $customer = $customer->id;
+            }
+
+            $metadata = ['checkoutSessionId' => $session->id];
+            if ($isFixedTerm) {
+                $metadata = ['termType' => Plan::TERM_FIXED] + $metadata;
+            }
+
+            $subscription = $this->createSubscription([
+                'userId' => $userId,
+                'planId' => $planId,
+                'gateway' => 'stripe',
+                'gatewaySubscriptionId' => $stripeSubId,
+                'gatewayCustomerId' => $customer,
+                'status' => Headcount::getInstance()->webhooks->mapStripeStatus($stripeSubscription->status ?? 'active'),
+                'startDate' => $stripeSubscription
+                    ? $stripeSubscription->current_period_start
+                    : ($termStart ?: time()),
+                'endDate' => $stripeSubscription
+                    ? $stripeSubscription->current_period_end
+                    : $termEnd,
+                'trialStartDate' => $stripeSubscription?->trial_start,
+                'trialEndDate' => $stripeSubscription?->trial_end,
+                'cancelAtPeriodEnd' => (bool)($stripeSubscription->cancel_at_period_end ?? false),
+                'amount' => $isFixedTerm && isset($session->amount_total)
+                    ? $session->amount_total / 100
+                    : $plan->price,
+                'currency' => $plan->currency,
+                'metadata' => $metadata,
+            ]);
+
+            if (!$subscription) {
+                return 'failed';
+            }
+
+            if ($sendEmail) {
+                Headcount::getInstance()->emails->sendWelcomeEmail($subscription);
+            }
+
+            return 'processed';
+        } finally {
+            $mutex->release($lock);
+        }
+    }
+
+    /**
+     * The subscription a Checkout session already produced, if any.
+     *
+     * A recurring checkout is found by its Stripe subscription id. A season checkout has no
+     * Stripe subscription, so it is found by the session id stored in its metadata.
+     */
+    public function getSubscriptionForCheckoutSession(StripeObject $session): ?Subscription
+    {
+        $stripeSubId = $session->subscription ?? null;
+        if ($stripeSubId instanceof StripeObject) {
+            $stripeSubId = $stripeSubId->id;
+        }
+
+        if ($stripeSubId && ($existing = $this->getSubscriptionByGatewayId($stripeSubId))) {
+            return $existing;
+        }
+
+        if (empty($session->id)) {
+            return null;
+        }
+
+        // The metadata column holds double-encoded JSON, so it is searched as text for the id
+        // and the exact value checked once decoded — one session id can be a prefix of another.
+        $candidates = Subscription::find()
+            ->status(null)
+            ->gateway('stripe')
+            ->andWhere(['like', 'headcount_subscriptions.metadata', $session->id])
+            ->all();
+
+        foreach ($candidates as $candidate) {
+            if (($candidate->metadata['checkoutSessionId'] ?? null) === $session->id) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     public function updateSubscriptionStatus(Subscription $subscription, string $newStatus): bool

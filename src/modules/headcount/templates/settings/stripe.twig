@@ -42,4 +42,39 @@
         <li><code>invoice.payment_action_required</code></li>
         <li><code>customer.subscription.trial_will_end</code></li>
     </ul>
+
+    {% if webhookHealth is defined %}
+        <hr>
+
+        <h2>{{ 'Webhook Status'|t('headcount') }}</h2>
+
+        {% for problem in webhookProblems %}
+            <p class="error">{{ problem|raw }}</p>
+        {% endfor %}
+
+        <table class="data fullwidth">
+            <tbody>
+                <tr>
+                    <th>{{ 'Last webhook received'|t('headcount') }}</th>
+                    <td>{{ webhookHealth.lastReceived ? webhookHealth.lastReceived|datetime('short') : 'Never'|t('headcount') }}</td>
+                </tr>
+                <tr>
+                    <th>{{ 'Last webhook rejected'|t('headcount') }}</th>
+                    <td>
+                        {% if webhookHealth.lastRejected %}
+                            {{ webhookHealth.lastRejected.time|datetime('short') }} — {{ webhookHealth.lastRejected.reason }}
+                        {% else %}
+                            {{ 'None'|t('headcount') }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ 'Last signup recorded at checkout return'|t('headcount') }}</th>
+                    <td>{{ webhookHealth.lastFallback ? webhookHealth.lastFallback|datetime('short') : 'None'|t('headcount') }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p class="light">{{ 'Stripe shows every delivery attempt and the response this site gave under Developers → Webhooks → your endpoint. Subscriptions Headcount missed can be pulled in with {command}.'|t('headcount', { command: '<code>php craft headcount/subscriptions/import</code>' })|raw }}</p>
+    {% endif %}
 {% endblock %}

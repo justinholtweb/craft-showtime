@@ -40,7 +40,7 @@ class Stripe extends Component
         $user = Craft::$app->getUsers()->getUserById($userId);
 
         $params = [
-            'success_url' => Craft::$app->getSites()->getCurrentSite()->getBaseUrl() . ltrim($settings->checkoutSuccessUrl, '/') . '?session_id={CHECKOUT_SESSION_ID}',
+            'success_url' => $this->checkoutReturnUrl(),
             'cancel_url' => Craft::$app->getSites()->getCurrentSite()->getBaseUrl() . ltrim($settings->checkoutCancelUrl, '/'),
             'client_reference_id' => (string)$userId,
             'metadata' => [
@@ -232,6 +232,40 @@ class Stripe extends Component
     public function getSubscription(string $subscriptionId): StripeSubscription
     {
         return $this->getClient()->subscriptions->retrieve($subscriptionId);
+    }
+
+    /**
+     * Where Stripe sends a member after paying: Headcount's success action, which records the
+     * subscription straight away (in case the webhook is late or isn't arriving) and then
+     * forwards to the site's `checkoutSuccessUrl` with the same `session_id`.
+     *
+     * The placeholder is appended by hand because Stripe needs its braces left unencoded.
+     */
+    public function checkoutReturnUrl(): string
+    {
+        $url = UrlHelper::actionUrl('headcount/checkout/success');
+
+        return $url . (str_contains($url, '?') ? '&' : '?') . 'session_id={CHECKOUT_SESSION_ID}';
+    }
+
+    public function getCheckoutSession(string $sessionId): CheckoutSession
+    {
+        return $this->getClient()->checkout->sessions->retrieve($sessionId);
+    }
+
+    /**
+     * Completed Checkout sessions created since a timestamp, newest first, paging through as
+     * many as there are.
+     *
+     * @return iterable<CheckoutSession>
+     */
+    public function getCompletedCheckoutSessions(int $since): iterable
+    {
+        return $this->getClient()->checkout->sessions->all([
+            'status' => 'complete',
+            'created' => ['gte' => $since],
+            'limit' => 100,
+        ])->autoPagingIterator();
     }
 
     public function getCustomer(string $customerId): Customer
